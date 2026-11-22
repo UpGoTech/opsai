@@ -1,4 +1,4 @@
-"""Rename OpsPilot app artifacts to OpsAi on existing sites."""
+"""One-time migrate: rename legacy Module Def / DocType / app rows to OpsAi."""
 
 from __future__ import annotations
 

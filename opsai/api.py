@@ -378,7 +378,7 @@ def connect_hermes(
 			_set_connection_status(target, _("Disconnected"))
 			return {"ok": False, "connected": False, "message": str(err)}
 
-	# Verify chat path (gateway WS) + optional history REST — same as OpsPilot.
+	# Verify chat path (gateway WS) + optional history REST.
 	ws_ok, sessions_ok, sessions_err, ws_err = _gateway_alive(settings)
 
 	if ws_ok:
@@ -545,7 +545,7 @@ def test_connection(user: str | None = None):
 		"GET", "/api/sessions", settings=settings, params={"limit": 1}, timeout=20
 	)
 
-	# Chat uses gateway WebSocket JSON-RPC (OpsPilot), not /v1 on the dashboard port.
+	# Chat uses gateway WebSocket JSON-RPC, not /v1 on the dashboard port.
 	ws_ok = False
 	ws_err = None
 	try:
@@ -2189,7 +2189,7 @@ def _append_transcript(session: str, role: str, text: str):
 
 
 def _session_id(row: dict) -> str:
-	# Prefer durable stored id (OpsPilot) — live/runtime ids go stale after gateway restart.
+	# Prefer durable stored id — live/runtime ids go stale after gateway restart.
 	return str(
 		row.get("stored_session_id")
 		or row.get("id")
@@ -2263,7 +2263,7 @@ def create_session(
 	title: str | None = None,
 	approval_mode: str | None = None,
 ):
-	"""Create a Hermes session via gateway WS (OpsPilot session.create) — not REST POST /api/sessions."""
+	"""Create a Hermes session via gateway WS (session.create) — not REST POST /api/sessions."""
 	_require_access()
 	try:
 		data = create_gateway_session(title=title, approval_mode=approval_mode)
@@ -2482,7 +2482,7 @@ def _tool_name(payload: dict) -> str:
 
 
 def _hermes_event_to_preview(etype: str, payload: dict) -> list[dict]:
-	"""Map Hermes gateway events → Flow preview deltas (OpsPilot / Desktop parity)."""
+	"""Map Hermes gateway events → Flow preview deltas (Desktop parity)."""
 	if not isinstance(payload, dict):
 		payload = {}
 	events: list[dict] = []
@@ -2551,7 +2551,7 @@ def _complete_hermes_turn(session: str, message: str) -> str:
 	_clear_preview(session)
 	if assistant:
 		# Pull HTML/PDF workspace files into the user's private folder and rewrite
-		# Hermes paths / ::preview{file=…} to Frappe private URLs (OpsPilot parity).
+		# Hermes paths / ::preview{file=…} to Frappe private URLs.
 		ingested = ingest_assistant_artifacts(session, assistant)
 		final_text = ingested.get("text") or assistant
 		artifacts = ingested.get("artifacts") or []

@@ -1,7 +1,7 @@
 """Ingest Hermes-generated HTML/PDF files into the user's private Frappe files.
 
-Mirrors OpsPilot / Desktop: detect workspace paths and ``::preview{file=…}``,
-pull bytes from the gateway, rewrite chat text to Frappe private URLs.
+Detect workspace paths and ``::preview{file=…}``, pull bytes from the gateway,
+rewrite chat text to Frappe private URLs (Hermes Desktop parity).
 """
 
 from __future__ import annotations

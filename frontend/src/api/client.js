@@ -276,7 +276,7 @@ export class FrappeClient {
 
 	// --- attachments -----------------------------------------------------------
 
-	/** Pull a Hermes HTML/PDF into the user's private Frappe files (OpsPilot artifacts). */
+	/** Pull a Hermes HTML/PDF into the user's private Frappe files. */
 	importArtifact(path, session = null) {
 		return this.transport.call("opsai.api.import_artifact", {
 			path,

@@ -1,12 +1,33 @@
 # OpsAi
 
-Frappe / ERPNext app that stores per-user AI gateway settings for [OpsAi](https://github.com/UpGoTech/OpsAi).
+Frappe / ERPNext app that stores per-user AI gateway settings for [OpsAi](https://github.com/UpGoTech/opsai).
 
 ## Install
 
+Use the **lowercase** GitHub URL. On Linux, `bench get-app` / `git clone` name the folder from the URL path, and Frappe requires that folder (and `sites/apps.txt`) to match the Python package name `opsai`.
+
 ```bash
 cd ~/frappe-bench
-bench get-app https://github.com/UpGoTech/OpsAi
+bench get-app https://github.com/UpGoTech/opsai
+bench --site <site> install-app opsai
+bench --site <site> migrate
+```
+
+### Fix: `App opsai not in apps.txt` / `No module named 'OpsAi'`
+
+That means the app was cloned as `apps/OpsAi` (mixed case). Rename with a two-step move (needed on case-insensitive mounts too), refresh the editable install, then install:
+
+```bash
+cd ~/frappe-bench/apps
+# only if the folder is still OpsAi:
+mv OpsAi opsai-tmp && mv opsai-tmp opsai
+
+cd ~/frappe-bench
+# ensure sites/apps.txt lists `opsai` (not OpsAi)
+sed -i 's/^OpsAi$/opsai/' sites/apps.txt
+grep -qx 'opsai' sites/apps.txt || echo opsai >> sites/apps.txt
+
+bench setup requirements
 bench --site <site> install-app opsai
 bench --site <site> migrate
 ```

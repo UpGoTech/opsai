@@ -1,4 +1,4 @@
-/** Hermes / Frappe file artifacts — OpsPilot & Desktop `::preview` parity. */
+/** Hermes / Frappe file artifacts — Desktop `::preview` parity. */
 
 const SERVER_ROOT = String.raw`\/(?:opt|home|tmp|var|Users|root|data)`
 /** Broader than the Preview/Download card set — every /opt/… path is scrubbed from prose. */
@@ -135,7 +135,7 @@ export function extractArtifacts(source, extras = []) {
 	return out
 }
 
-/** Hide gateway paths in chat prose — cards / ::preview own the file UI (OpsPilot scrub). */
+/** Hide gateway paths in chat prose — cards / ::preview own the file UI. */
 export function scrubArtifactPaths(source) {
 	if (!source) return source
 	let next = source

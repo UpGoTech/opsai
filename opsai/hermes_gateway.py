@@ -1,7 +1,7 @@
 # Copyright (c) 2026, OpsAi and contributors
 # License: MIT. See LICENSE
 
-"""Hermes gateway WebSocket JSON-RPC — same protocol as OpsPilot / Hermes Desktop remote.
+"""Hermes gateway WebSocket JSON-RPC — same protocol as Hermes Desktop remote.
 
 The dashboard URL (e.g. :32798) does not expose OpenAI `/v1/chat/completions` to the
 network (api_server binds 127.0.0.1:8642). Chat goes over `/api/ws` after minting a
@@ -36,7 +36,7 @@ except ImportError:  # pragma: no cover
 	websocket = None  # type: ignore
 
 
-# Terminal event types that end a prompt turn (OpsPilot chat.ts).
+# Terminal event types that end a prompt turn.
 _TURN_DONE = frozenset(
 	{
 		"message.complete",
@@ -70,7 +70,7 @@ def _ws_url(settings: dict[str, Any], *, ticket: str | None = None, token: str |
 
 
 def mint_ws_ticket(settings: dict[str, Any] | None = None) -> str:
-	"""POST /api/auth/ws-ticket (OpsPilot auth.rs) — single-use, ~30s."""
+	"""POST /api/auth/ws-ticket — single-use, ~30s."""
 	settings = ensure_session(settings or get_user_settings())
 	headers = _auth_headers(settings)
 	if "Cookie" not in headers and "Authorization" not in headers:
@@ -109,7 +109,7 @@ def mint_ws_ticket(settings: dict[str, Any] | None = None) -> str:
 
 
 def resolve_ws_url(settings: dict[str, Any] | None = None) -> str:
-	"""Cookie sessions → remint ticket; token sessions → ?token= (OpsPilot)."""
+	"""Cookie sessions → remint ticket; token sessions → ?token=."""
 	settings = ensure_session(settings or get_user_settings())
 	auth_mode = (settings.get("auth_mode") or "password").strip()
 	token = (settings.get("session_token") or "").strip()
@@ -176,7 +176,7 @@ class GatewayClient:
 			if isinstance(chunk, bytes):
 				chunk = chunk.decode("utf-8", errors="replace")
 			self._buffer += chunk
-			# Prefer newline-delimited frames (OpsPilot); also accept a lone JSON object.
+			# Prefer newline-delimited frames; also accept a lone JSON object.
 			while True:
 				if "\n" in self._buffer:
 					line, self._buffer = self._buffer.split("\n", 1)
@@ -199,7 +199,7 @@ class GatewayClient:
 		self._next_id += 1
 		rid = f"r{self._next_id}"
 		frame = {"jsonrpc": "2.0", "id": rid, "method": method, "params": params or {}}
-		# OpsPilot sends a trailing newline.
+		# Hermes gateway expects a trailing newline.
 		self._ws.send(json.dumps(frame) + "\n")
 		self._ws.settimeout(timeout if timeout is not None else self.timeout)
 		events: list[dict] = []
@@ -221,7 +221,7 @@ class GatewayClient:
 		raise HermesError(_("Hermes gateway RPC timed out: {0}").format(method))
 
 	def rpc_flexible(self, method: str, params: dict, *, timeout: float | None = None) -> Any:
-		"""Call RPC; on 'Extra inputs are not permitted' strip offending keys and retry (OpsPilot)."""
+		"""Call RPC; on 'Extra inputs are not permitted' strip offending keys and retry."""
 		try:
 			return self.rpc(method, params, timeout=timeout)
 		except HermesError as err:
@@ -244,7 +244,7 @@ class GatewayClient:
 		timeout: float = 300,
 		on_event=None,
 	) -> str:
-		"""prompt.submit + collect until message.complete (OpsPilot chat turn).
+		"""prompt.submit + collect until message.complete.
 
 		`on_event(etype, payload)` is called for each gateway event so the UI can
 		mirror Desktop (thinking / text deltas / tools) while the turn runs.
@@ -312,7 +312,7 @@ def create_gateway_session(
 	approval_mode: str | None = None,
 	settings: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-	"""session.create via WS — returns stored + live ids (OpsPilot sessions.ts)."""
+	"""session.create via WS — returns stored + live ids."""
 	params: dict[str, Any] = {"source": "gui"}
 	if title:
 		params["title"] = title

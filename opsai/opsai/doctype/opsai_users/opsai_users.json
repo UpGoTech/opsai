@@ -34,7 +34,7 @@
       "label": "Connection"
     },
     {
-      "description": "Hermes base URL including port (e.g. http://hrms.fabrixcel.com:32798). Must be unique per user — each Hermes agent port is one assignment. Use Test to verify reachability before Save.",
+      "description": "Hermes base URL including port (e.g. http://hrms.fabrixcel.com:32798). Must be unique per user \u2014 each Hermes agent port is one assignment. Use Test to verify reachability before Save.",
       "fieldname": "gateway_url",
       "fieldtype": "Data",
       "in_list_view": 1,
@@ -103,10 +103,10 @@
   ],
   "index_web_pages_for_search": 0,
   "links": [],
-  "modified": "2026-11-21 00:00:00.000000",
+  "modified": "2026-11-23 00:00:00.000000",
   "modified_by": "Administrator",
   "module": "OpsAi",
-  "name": "OpsAi Settings",
+  "name": "OpsAi Users",
   "naming_rule": "By fieldname",
   "owner": "Administrator",
   "permissions": [

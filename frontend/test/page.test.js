@@ -472,7 +472,7 @@ test("boot is refetched only for the records it lists, skills when a skill or an
 	dom.window.Storage.prototype.setItem = setItem;
 });
 
-test("without a model the normal page shows the setup state and no composer, and keeps to the screen a phone's keyboard leaves; an admin can open OpsAi Settings, and anyone else is told an admin needs to", async (t) => {
+test("without a model the normal page shows the setup state and no composer, and keeps to the screen a phone's keyboard leaves; an admin can open OpsAi Users, and anyone else is told an admin needs to", async (t) => {
 	// the keyboard shrinks only the visible part of the page; a pinch zoom does too, by its scale
 	const viewport = Object.assign(new dom.window.EventTarget(), { height: 844, scale: 1 });
 	const { scrollTo } = dom.window;
@@ -514,9 +514,9 @@ test("without a model the normal page shows the setup state and no composer, and
 		return { page, setup, state };
 	};
 
-	const admin = mountSetup({ "OpsAi Settings": ["write", "create"] });
+	const admin = mountSetup({ "OpsAi Users": ["write", "create"] });
 	const button = [...admin.setup.querySelectorAll("button")].find((b) =>
-		b.textContent.includes("Open OpsAi Settings")
+		b.textContent.includes("Open OpsAi Users")
 	);
 	assert.ok(button);
 	button.click();
@@ -525,7 +525,7 @@ test("without a model the normal page shows the setup state and no composer, and
 
 	const user = mountSetup({});
 	assert.equal(user.setup.querySelector("button"), null);
-	assert.ok(user.setup.textContent.includes("Ask an administrator to configure OpsAi Settings."));
+	assert.ok(user.setup.textContent.includes("Ask an administrator to configure OpsAi Users."));
 });
 
 test("when Hermes is disconnected the brain-offline state replaces the thread (including old logs) and hides the composer", async (t) => {
@@ -553,7 +553,7 @@ test("when Hermes is disconnected the brain-offline state replaces the thread (i
 		...boot,
 		hermes_configured: true,
 		hermes_connected: false,
-		permissions: { "OpsAi Settings": ["write"] },
+		permissions: { "OpsAi Users": ["write"] },
 	});
 	const setup = document.createElement("div");
 	const app = createApp(SetupState).use(router);

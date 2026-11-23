@@ -7,6 +7,7 @@
 		:style="{ scrollPaddingBottom: composerHeight + 24 + 'px' }"
 		@scroll="onScroll"
 		@mousedown="onMouseDown"
+		@click.capture="onLinkClick"
 		@wheel.passive="markReader"
 		@touchmove.passive="markReader"
 		@keydown="onReaderKey"
@@ -170,6 +171,12 @@
 <script setup>
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, provide, reactive, ref, watch } from "vue"
 
+import {
+	anchorFromClick,
+	navigateDeskHref,
+	normalizeDeskHref,
+	shouldInterceptDeskClick,
+} from "../deskRoute.js"
 import { layout } from "../layout.js"
 import { buildItems, formatTime, liveLabelText, panelIds, suggestedReplies, userAttachments, userText } from "../transcript.js"
 import { __ } from "../translate.js"
@@ -195,6 +202,8 @@ const props = defineProps({
 	centerComposer: { type: Boolean, default: false },
 })
 const flow = inject("opsai")
+// docked beside Desk/app: Hermes /app links push the host Vue route; /opsai keeps new-tab
+const besidePage = inject("opsaiBesidePage", false)
 const conversation = computed(() => props.conversation ?? flow.state.conversation)
 // the session's own: a sub-agent's thread offers none
 const replies = computed(() => (props.suggestions && !props.conversation ? suggestedReplies(conversation.value) : null))
@@ -364,6 +373,21 @@ function onScrollbar(event) {
 // a clicked button, link or summary takes no focus, so a closing dialog can't scroll the list back to it
 function onMouseDown(event) {
 	if (event.target.closest("button, a[href], summary")) event.preventDefault()
+}
+
+// Desk URLs: unwrap JSON-quoted list filters Hermes emits, then set_route when docked.
+function onLinkClick(event) {
+	const anchor = anchorFromClick(event)
+	if (!anchor || !scroller.value?.contains(anchor)) return
+	const href = anchor.getAttribute("href") || anchor.href
+	const normalized = normalizeDeskHref(href)
+	if (!normalized) return
+	if (normalized !== href) anchor.setAttribute("href", normalized)
+	if (!besidePage || !shouldInterceptDeskClick(event)) return
+	if (navigateDeskHref(normalized)) {
+		event.preventDefault()
+		event.stopPropagation()
+	}
 }
 
 // collapsing a fold, a tool group or a thought can leave the view at the bottom

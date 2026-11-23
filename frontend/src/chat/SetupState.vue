@@ -33,13 +33,13 @@
 		<Button
 			v-if="canConfigure && !brainMissing"
 			variant="solid"
-			:label="__('Open OpsAi Settings')"
+			:label="__('Open OpsAi Users')"
 			@click="openSettings"
 		/>
 		<Button
 			v-else-if="canConfigure && brainMissing"
 			variant="solid"
-			:label="__('Grant access in OpsAi Settings')"
+			:label="__('Grant access in OpsAi Users')"
 			@click="openSettings"
 		/>
 	</div>
@@ -54,7 +54,7 @@ import { __ } from "@opsai/ui-core/translate.js";
 const flow = inject("opsai");
 const page = inject("opsaiPage");
 const hasModels = computed(() => page.state.boot.models.length > 0);
-const canConfigure = computed(() => page.can("OpsAi Settings", "write") || page.can("OpsAi Settings", "create"));
+const canConfigure = computed(() => page.can("OpsAi Users", "write") || page.can("OpsAi Users", "create"));
 const brainMissing = computed(
 	() => Boolean(page.state.boot.hermes_configured) && page.state.boot.hermes_connected === false
 );
@@ -94,22 +94,22 @@ const subline = computed(() => {
 	if (brainMissing.value) return accessLine.value;
 	if (!hasModels.value) {
 		return canConfigure.value
-			? __("Set your Hermes gateway URL in OpsAi Settings to get started.")
-			: __("Ask an administrator to configure OpsAi Settings.");
+			? __("Set your Hermes gateway URL in OpsAi Users to get started.")
+			: __("Ask an administrator to configure OpsAi Users.");
 	}
 	return __("Ask an administrator to enable an agent.");
 });
 
 function openSettings() {
-	// Connect lives on the Desk OpsAi Settings form — open it when Hermes is offline.
+	// Connect lives on the Desk OpsAi Users form — open it when Hermes is offline.
 	if (brainMissing.value) {
 		const user = page.state.boot.user?.name;
 		if (window.frappe?.set_route && user) {
-			window.frappe.set_route("Form", "OpsAi Settings", user);
+			window.frappe.set_route("Form", "OpsAi Users", user);
 			return;
 		}
 		if (user) {
-			window.open(`/app/opsai-settings/${encodeURIComponent(user)}`, "_blank");
+			window.open(`/app/opsai-users/${encodeURIComponent(user)}`, "_blank");
 			return;
 		}
 	}

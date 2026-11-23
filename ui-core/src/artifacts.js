@@ -4,9 +4,10 @@ const SERVER_ROOT = String.raw`\/(?:opt|home|tmp|var|Users|root|data)`
 /** Broader than the Preview/Download card set — every /opt/… path is scrubbed from prose. */
 const SCRUB_EXT = String.raw`pdf|zip|rar|7z|xls|xlsx|xlsm|csv|doc|docx|ppt|pptx|txt|md|rtf|png|jpe?g|gif|webp|bmp|html?|xhtml|json|xml|yaml|yml|py|js|ts|sh|log`
 const ARTIFACT_EXT = String.raw`html?|xhtml|pdf`
-const PATH_CORE = String.raw`${SERVER_ROOT}\/[^\s)\]>"'\`]+?\.(?:${SCRUB_EXT})`
-const ARTIFACT_PATH_CORE = String.raw`${SERVER_ROOT}\/[^\s)\]>"'\`]+?\.(?:${ARTIFACT_EXT})`
-const FRAPPE_FILE = String.raw`\/(?:private\/)?files\/[^\s)\]>"'\`]+?\.(?:${ARTIFACT_EXT})`
+// Allow spaces in paths (e.g. /opt/data/Open Projects.pdf); stop at newlines / delimiters.
+const PATH_CORE = String.raw`${SERVER_ROOT}\/[^\n)\]>"'\`]+?\.(?:${SCRUB_EXT})\b`
+const ARTIFACT_PATH_CORE = String.raw`${SERVER_ROOT}\/[^\n)\]>"'\`]+?\.(?:${ARTIFACT_EXT})\b`
+const FRAPPE_FILE = String.raw`\/(?:private\/)?files\/[^\n)\]>"'\`]+?\.(?:${ARTIFACT_EXT})\b`
 
 const PREVIEW_RE = new RegExp(
 	String.raw`(?<=^|\s)::preview\{([^{}]{0,2048})\}`,

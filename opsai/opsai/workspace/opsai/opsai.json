@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"opsai-hdr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>OpsAi</b></span>\",\"col\":12}},{\"id\":\"opsai-s0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"OpsAi Settings\",\"col\":4}},{\"id\":\"opsai-card\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}}]",
+ "content": "[{\"id\":\"opsai-hdr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>OpsAi</b></span>\",\"col\":12}},{\"id\":\"opsai-nc1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"System Users\",\"col\":3}},{\"id\":\"opsai-nc2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Agents Assigned\",\"col\":3}},{\"id\":\"opsai-nc3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Agents Live\",\"col\":3}},{\"id\":\"opsai-nc4\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Agents Offline\",\"col\":3}}]",
  "creation": "2026-11-20 00:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -11,32 +11,29 @@
  "idx": 0,
  "is_hidden": 0,
  "label": "OpsAi",
- "links": [
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Settings",
-   "link_count": 1,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "OpsAi Settings",
-   "link_count": 0,
-   "link_to": "OpsAi Settings",
-   "link_type": "DocType",
-   "onboard": 1,
-   "type": "Link"
-  }
- ],
- "modified": "2026-11-20 00:00:00.000000",
+ "links": [],
+ "modified": "2026-11-23 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "OpsAi",
  "name": "OpsAi",
- "number_cards": [],
+ "number_cards": [
+  {
+   "label": "System Users",
+   "number_card_name": "OpsAi System Users"
+  },
+  {
+   "label": "Agents Assigned",
+   "number_card_name": "OpsAi Agents Assigned"
+  },
+  {
+   "label": "Agents Live",
+   "number_card_name": "OpsAi Agents Live"
+  },
+  {
+   "label": "Agents Offline",
+   "number_card_name": "OpsAi Agents Offline"
+  }
+ ],
  "owner": "Administrator",
  "parent_page": "",
  "public": 1,
@@ -44,15 +41,7 @@
  "restrict_to_domain": "",
  "roles": [],
  "sequence_id": 10.0,
- "shortcuts": [
-  {
-   "color": "Blue",
-   "doc_view": "List",
-   "label": "OpsAi Settings",
-   "link_to": "OpsAi Settings",
-   "type": "DocType"
-  }
- ],
+ "shortcuts": [],
  "title": "OpsAi",
  "type": "Workspace"
 }

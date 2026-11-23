@@ -6,6 +6,7 @@
 	<div
 		ref="root"
 		class="flow-sidebar-surface flex h-full min-h-0 overflow-clip text-base text-ink-gray-8 [--flow-chat-text:theme(fontSize.base)] [--flow-step-text:theme(fontSize.base)]"
+		@click.capture="onDeskLinkClick"
 	>
 		<SessionSidebar
 			v-if="!noSidebar"
@@ -158,6 +159,12 @@ import { installFocusRings } from "@opsai/ui-core/focusRings.js";
 import { installViewport } from "@opsai/ui-core/viewport.js";
 import { provideComposerHeight } from "@opsai/ui-core/composerHeight.js";
 import { provideFileDrop } from "@opsai/ui-core/fileDrop.js";
+import {
+	anchorFromClick,
+	navigateDeskHref,
+	normalizeDeskHref,
+	shouldInterceptDeskClick,
+} from "@opsai/ui-core/deskRoute.js";
 import { layout, measureLayoutBy } from "@opsai/ui-core/layout.js";
 import { createFlowStore } from "@opsai/ui-core/store.js";
 import { __ } from "@opsai/ui-core/translate.js";
@@ -395,6 +402,21 @@ const router = useRouter();
 function openInTab() {
 	window.open(`/opsai${route.fullPath}`, "_blank", "noopener");
 	closePanel();
+}
+// Hermes Desk links: unwrap JSON-quoted filters in the query, then either push the host
+// Vue route (docked panel) or let target=_blank open the cleaned URL (full-page /opsai).
+function onDeskLinkClick(event) {
+	const anchor = anchorFromClick(event);
+	if (!anchor || !root.value?.contains(anchor)) return;
+	const href = anchor.getAttribute("href") || anchor.href;
+	const normalized = normalizeDeskHref(href);
+	if (!normalized) return;
+	if (normalized !== href) anchor.setAttribute("href", normalized);
+	if (!inPanel || !shouldInterceptDeskClick(event)) return;
+	if (navigateDeskHref(normalized)) {
+		event.preventDefault();
+		event.stopPropagation();
+	}
 }
 // a setup form's record in the chat's place, for whoever may read its records
 // a started chat's + menu after Attach: skills where there are some or one can be added. A new chat

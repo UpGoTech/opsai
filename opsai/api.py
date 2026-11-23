@@ -13,6 +13,13 @@ import frappe
 from frappe import _
 
 from opsai.artifacts import import_hermes_path, ingest_assistant_artifacts
+from opsai.attachments import (
+	caption_for_attachment_ids,
+	cleanup_attachments as _cleanup_staged_attachments,
+	partition_attachment_ids,
+	stage_attachment,
+	user_message_blocks,
+)
 from opsai.hermes import (
 	HermesError,
 	get_user_settings,
@@ -90,7 +97,7 @@ def _read_hermes_model_info(settings: dict) -> tuple[str, str, Any]:
 
 
 def _hermes_models_catalog(settings: dict | None) -> list[dict]:
-	"""Models the UI may show — prefer OpsAi Settings default, else Hermes current."""
+	"""Models the UI may show — prefer OpsAi Users default, else Hermes current."""
 	if not settings:
 		return []
 
@@ -113,7 +120,7 @@ def _hermes_models_catalog(settings: dict | None) -> list[dict]:
 
 
 def _persist_default_model(user: str, provider: str | None, model: str | None) -> None:
-	if not user or not frappe.db.exists("OpsAi Settings", user):
+	if not user or not frappe.db.exists("OpsAi Users", user):
 		return
 	updates = {}
 	if provider is not None:
@@ -123,7 +130,7 @@ def _persist_default_model(user: str, provider: str | None, model: str | None) -
 	if not updates:
 		return
 	for field, value in updates.items():
-		frappe.db.set_value("OpsAi Settings", user, field, value, update_modified=False)
+		frappe.db.set_value("OpsAi Users", user, field, value, update_modified=False)
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit
 
 
@@ -415,13 +422,13 @@ def connect_hermes(
 
 
 def _set_connection_status(user: str, status: str):
-	if frappe.db.exists("OpsAi Settings", user):
-		frappe.db.set_value("OpsAi Settings", user, "connection_status", status, update_modified=False)
+	if frappe.db.exists("OpsAi Users", user):
+		frappe.db.set_value("OpsAi Users", user, "connection_status", status, update_modified=False)
 
 
 @frappe.whitelist(methods=["POST"])
 def disconnect_hermes(user: str | None = None):
-	"""Clear Hermes session cookies and mark OpsAi Settings as Disconnected.
+	"""Clear Hermes session cookies and mark OpsAi Users as Disconnected.
 
 	Credentials (username/password/API key) are kept so Connect can re-authenticate.
 	"""
@@ -434,14 +441,14 @@ def disconnect_hermes(user: str | None = None):
 	):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
-	if not frappe.db.exists("OpsAi Settings", target):
-		return {"ok": False, "connected": False, "message": _("OpsAi Settings not found")}
+	if not frappe.db.exists("OpsAi Users", target):
+		return {"ok": False, "connected": False, "message": _("OpsAi Users not found")}
 
 	# Do not doc.save() here — empty Password fields on the loaded doc would wipe
 	# gateway_password / session_token via Document._save_passwords.
 	from frappe.utils.password import remove_encrypted_password
 
-	remove_encrypted_password("OpsAi Settings", target, "session_cookies")
+	remove_encrypted_password("OpsAi Users", target, "session_cookies")
 	_set_connection_status(target, _("Disconnected"))
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit
 
@@ -461,10 +468,10 @@ def _persist_connect_credentials(
 	session_token: str | None = None,
 	auth_mode: str | None = None,
 ):
-	"""Write Connect form values onto OpsAi Settings before login."""
-	if not user or not frappe.db.exists("OpsAi Settings", user):
+	"""Write Connect form values onto OpsAi Users before login."""
+	if not user or not frappe.db.exists("OpsAi Users", user):
 		return
-	doc = frappe.get_doc("OpsAi Settings", user)
+	doc = frappe.get_doc("OpsAi Users", user)
 	changed = False
 	if gateway_url and doc.gateway_url != gateway_url:
 		doc.gateway_url = gateway_url
@@ -519,7 +526,7 @@ def test_connection(user: str | None = None):
 		return {
 			"ok": False,
 			"connected": False,
-			"message": _("Hermes is disconnected. Open OpsAi Settings and click Connect."),
+			"message": _("Hermes is disconnected. Open OpsAi Users and click Connect."),
 			"gateway_url": gateway,
 		}
 
@@ -602,13 +609,13 @@ def test_connection(user: str | None = None):
 
 
 @frappe.whitelist()
-def get_my_opsai_settings():
-	"""Return the signed-in user's OpsAi Settings, including Password fields."""
+def get_my_opsai_users():
+	"""Return the signed-in user's OpsAi Users, including Password fields."""
 	user = frappe.session.user
 	if not user or user == "Guest":
 		frappe.throw(_("Not logged in"), frappe.AuthenticationError)
 
-	if not frappe.db.exists("OpsAi Settings", user):
+	if not frappe.db.exists("OpsAi Users", user):
 		return None
 
 	from opsai.hermes import get_user_settings as load_settings
@@ -683,7 +690,7 @@ def apply_hermes_model(
 	user: str | None = None,
 	confirm_expensive_model: int | None = None,
 ):
-	"""Persist default on OpsAi Settings and POST /api/model/set (Desktop scope=main)."""
+	"""Persist default on OpsAi Users and POST /api/model/set (Desktop scope=main)."""
 	_require_access()
 	target = user or frappe.session.user
 	if not _can_manage_settings_user(target):
@@ -760,18 +767,21 @@ def apply_hermes_model(
 
 _HERMES_FILE_KINDS = frozenset({"soul", "config", "env", "memory", "user_md"})
 
-# Bounded memory stores (Hermes docs) — shown in the Desk editor char counter.
+# Bounded memory stores (Hermes docs). Char limits come from Hermes config.yaml
+# (memory.memory_char_limit / memory.user_char_limit); defaults match Hermes docs.
+_HERMES_MEMORY_DEFAULT_CHAR_LIMITS = {
+	"memory": 2200,
+	"user_md": 1375,
+}
 _HERMES_MEMORY_FILES = {
 	"memory": {
 		"path": "memories/MEMORY.md",
 		"label": "MEMORY.md",
-		"char_limit": 2200,
 		"hint": "Agent notes (facts, conventions). Edit via Hermes memory actions: add / patch / remove.",
 	},
 	"user_md": {
 		"path": "memories/USER.md",
 		"label": "USER.md",
-		"char_limit": 1375,
 		"hint": "User profile (preferences, style). Edit via Hermes memory actions: add / patch / remove.",
 	},
 }
@@ -789,6 +799,52 @@ _HERMES_MEMORY_MATCH_FOLD = str.maketrans(
 		**dict.fromkeys("\u2010\u2011\u2012\u2013\u2014\u2015\u2212", "-"),
 	}
 )
+
+
+def _parse_hermes_config_yaml(raw: str | None) -> dict[str, Any]:
+	"""Parse Hermes config.yaml text; empty/invalid → {}."""
+	text = (raw or "").strip()
+	if not text:
+		return {}
+	try:
+		import yaml
+	except ImportError:
+		return {}
+	try:
+		parsed = yaml.safe_load(text)
+	except Exception:
+		return {}
+	return parsed if isinstance(parsed, dict) else {}
+
+
+def _coerce_positive_int(value: Any, default: int) -> int:
+	try:
+		n = int(value)
+	except (TypeError, ValueError):
+		return default
+	return n if n > 0 else default
+
+
+def _hermes_memory_char_limit(settings: dict, profile: str | None, kind: str) -> int:
+	"""Resolve MEMORY.md / USER.md char budget from Hermes config.yaml.
+
+	Reads ``memory.memory_char_limit`` / ``memory.user_char_limit`` via
+	``/api/config/raw``. Falls back to Hermes documented defaults when missing.
+	"""
+	default = _HERMES_MEMORY_DEFAULT_CHAR_LIMITS.get(kind) or 2200
+	config_key = "user_char_limit" if kind == "user_md" else "memory_char_limit"
+	ok, data, _err = try_request(
+		"GET",
+		"/api/config/raw",
+		settings=settings,
+		params=_profile_params(profile),
+		timeout=30,
+	)
+	if not ok or not isinstance(data, dict):
+		return default
+	parsed = _parse_hermes_config_yaml(data.get("yaml") if isinstance(data.get("yaml"), str) else "")
+	memory_cfg = parsed.get("memory") if isinstance(parsed.get("memory"), dict) else {}
+	return _coerce_positive_int(memory_cfg.get(config_key), default)
 
 
 def _parse_hermes_memory_entries(text: str) -> list[str]:
@@ -920,7 +976,7 @@ def cint_safe(value) -> int:
 
 
 def _settings_for_manage_user(user: str | None = None) -> tuple[str, dict]:
-	"""Resolve OpsAi Settings for the caller (or an admin-managed user)."""
+	"""Resolve OpsAi Users for the caller (or an admin-managed user)."""
 	target = (user or frappe.session.user or "").strip()
 	if not target or target == "Guest":
 		frappe.throw(_("Not logged in"), frappe.AuthenticationError)
@@ -992,6 +1048,7 @@ def _load_hermes_memory_file(settings: dict, profile: str, kind: str) -> dict[st
 	meta = _HERMES_MEMORY_FILES.get(kind)
 	if not meta:
 		return {"ok": False, "message": _("Unknown memory file")}
+	limit = _hermes_memory_char_limit(settings, profile, kind)
 	ok, data, err = try_request(
 		"GET",
 		"/api/fs/read-text",
@@ -1013,9 +1070,9 @@ def _load_hermes_memory_file(settings: dict, profile: str, kind: str) -> dict[st
 				"entries": [],
 				"delimiter": _HERMES_MEMORY_ENTRY_DELIMITER,
 				"exists": False,
-				"char_limit": meta["char_limit"],
+				"char_limit": limit,
 				"chars": 0,
-				"available": meta["char_limit"],
+				"available": limit,
 				"hint": _(meta["hint"]),
 			}
 		return {"ok": False, "message": err or _("Could not load {0}").format(meta["label"])}
@@ -1027,7 +1084,6 @@ def _load_hermes_memory_file(settings: dict, profile: str, kind: str) -> dict[st
 	elif isinstance(data, str):
 		text = data
 	entries = _parse_hermes_memory_entries(text)
-	limit = meta["char_limit"]
 	return {
 		"ok": True,
 		"kind": kind,
@@ -1050,7 +1106,7 @@ def _save_hermes_memory_file(settings: dict, profile: str, kind: str, content: s
 	if not meta:
 		return {"ok": False, "message": _("Unknown memory file")}
 	text = content if content is not None else ""
-	limit = meta["char_limit"]
+	limit = _hermes_memory_char_limit(settings, profile, kind)
 	if limit and len(text) > limit:
 		return {
 			"ok": False,
@@ -1158,7 +1214,8 @@ def hermes_memory_action(
 		return loaded
 
 	meta = _HERMES_MEMORY_FILES[kind]
-	limit = meta["char_limit"]
+	# Prefer limit already resolved while loading (same config.yaml snapshot).
+	limit = loaded.get("char_limit") or _hermes_memory_char_limit(settings, profile_name, kind)
 	current = list(loaded.get("entries") or [])
 	next_entries, msg = _apply_hermes_memory_op(
 		current,
@@ -1209,7 +1266,7 @@ def hermes_memory_action(
 				meta["label"],
 				msg,
 				saved.get("chars") or 0,
-				limit,
+				saved.get("char_limit") or limit,
 				saved.get("available") or 0,
 			),
 		}
@@ -1259,6 +1316,20 @@ def _save_hermes_config(settings: dict, profile: str | None, content: str) -> di
 	return {"ok": True, "kind": "config", "profile": profile or "", "message": _("config.yaml saved to Hermes")}
 
 
+# Frappe ↔ Hermes bridge keys in Hermes .env. Edited via the "Frappe .env" tile
+# (not the generic .env dialog). Keys are independent — FM_SITE is not synced
+# from FRAPPE_URL.
+FRAPPE_CONNECTION_ENV_FIELDS = (
+	{"key": "FM_SITE", "description": "FM Hostname"},
+	{"key": "FRAPPE_URL", "description": "Frappe Site URL for Hermes"},
+	{"key": "FRAPPE_URL_USER", "description": "Frappe Site URL for User"},
+	{"key": "FRAPPE_API_KEY", "description": "User API Access Key"},
+	{"key": "FRAPPE_API_SECRET", "description": "User API Key's Secret"},
+)
+FRAPPE_CONNECTION_ENV_KEYS = tuple(f["key"] for f in FRAPPE_CONNECTION_ENV_FIELDS)
+ENV_EDITOR_HIDDEN_KEYS = frozenset(FRAPPE_CONNECTION_ENV_KEYS)
+
+
 def _load_hermes_env(settings: dict, profile: str | None) -> dict[str, Any]:
 	"""List set Hermes .env keys as rows (redacted). Reveal/save one key at a time in Desk."""
 	ok, data, err = try_request(
@@ -1273,6 +1344,9 @@ def _load_hermes_env(settings: dict, profile: str | None) -> dict[str, Any]:
 
 	rows: list[dict[str, Any]] = []
 	for key in sorted(data.keys()):
+		if key in ENV_EDITOR_HIDDEN_KEYS:
+			# Managed by the Frappe .env tile — skip in the generic .env editor.
+			continue
 		info = data.get(key)
 		if not isinstance(info, dict) or not info.get("is_set"):
 			continue
@@ -1295,6 +1369,7 @@ def _load_hermes_env(settings: dict, profile: str | None) -> dict[str, Any]:
 		"path": ".env",
 		"rows": rows,
 		"set_keys": [r["key"] for r in rows],
+		"hidden_keys": sorted(ENV_EDITOR_HIDDEN_KEYS),
 	}
 
 
@@ -1491,6 +1566,110 @@ def delete_hermes_env_var(
 		return {"ok": False, "message": str(err)}
 	profile_name = (profile or "").strip() or _default_hermes_profile(settings)
 	return _delete_hermes_env_var(settings, profile_name, key or "")
+
+
+def _get_frappe_connection_env(settings: dict, profile: str | None) -> dict[str, Any]:
+	"""Reveal the five Frappe bridge keys for the Frappe .env tile — browser-only."""
+	values: dict[str, str] = {key: "" for key in FRAPPE_CONNECTION_ENV_KEYS}
+	errors: list[str] = []
+	# Hermes rate-limits /api/env/reveal — pace + one retry so the dialog can fill.
+	for i, key in enumerate(FRAPPE_CONNECTION_ENV_KEYS):
+		if i:
+			time.sleep(0.35)
+		result = _reveal_hermes_env_var(settings, profile, key)
+		if not result.get("ok"):
+			time.sleep(0.6)
+			result = _reveal_hermes_env_var(settings, profile, key)
+		if result.get("ok"):
+			values[key] = str(result.get("value") or "")
+			continue
+		msg = str(result.get("message") or "")
+		# Missing keys are fine (Save will create them).
+		low = msg.lower()
+		if "not set" in low or "missing" in low or "not found" in low:
+			continue
+		errors.append(f"{key}: {msg}" if msg else key)
+	return {
+		"ok": True,
+		"profile": profile or "",
+		"values": values,
+		"fields": [dict(f) for f in FRAPPE_CONNECTION_ENV_FIELDS],
+		"keys": list(FRAPPE_CONNECTION_ENV_KEYS),
+		"warnings": errors,
+	}
+
+
+def _save_frappe_connection_env(
+	settings: dict,
+	profile: str | None,
+	values: dict[str, Any] | None,
+) -> dict[str, Any]:
+	"""Create or update the five Frappe bridge keys in Hermes .env (no cross-sync)."""
+	payload = values if isinstance(values, dict) else {}
+	saved: list[str] = []
+	failed: list[dict[str, str]] = []
+
+	for key in FRAPPE_CONNECTION_ENV_KEYS:
+		if key not in payload:
+			continue
+		value = "" if payload.get(key) is None else str(payload.get(key))
+		result = _put_hermes_env_var(settings, profile, key, value)
+		if result.get("ok"):
+			saved.append(key)
+		else:
+			failed.append({"key": key, "message": str(result.get("message") or _("Save failed"))})
+
+	if failed and not saved:
+		return {
+			"ok": False,
+			"message": failed[0]["message"],
+			"failed": failed,
+		}
+	msg = _("Saved Frappe .env ({0})").format(", ".join(saved)) if saved else _("Nothing to save")
+	if failed:
+		msg += " — " + _("failed: {0}").format(", ".join(f["key"] for f in failed))
+	return {
+		"ok": not failed,
+		"message": msg,
+		"saved": saved,
+		"failed": failed,
+	}
+
+
+@frappe.whitelist()
+def get_frappe_connection_env(
+	user: str | None = None,
+	profile: str | None = None,
+):
+	"""Load the five Frappe bridge keys from Hermes .env."""
+	_require_access()
+	try:
+		_target, settings = _settings_for_manage_user(user)
+	except Exception as err:
+		return {"ok": False, "message": str(err)}
+	profile_name = (profile or "").strip() or _default_hermes_profile(settings)
+	return _get_frappe_connection_env(settings, profile_name)
+
+
+@frappe.whitelist(methods=["POST"])
+def save_frappe_connection_env(
+	values: dict | str | None = None,
+	user: str | None = None,
+	profile: str | None = None,
+):
+	"""Write the five Frappe bridge keys to Hermes .env (add or update)."""
+	_require_access()
+	try:
+		_target, settings = _settings_for_manage_user(user)
+	except Exception as err:
+		return {"ok": False, "message": str(err)}
+	profile_name = (profile or "").strip() or _default_hermes_profile(settings)
+	if isinstance(values, str):
+		try:
+			values = json.loads(values)
+		except (TypeError, ValueError):
+			return {"ok": False, "message": _("Invalid values payload")}
+	return _save_frappe_connection_env(settings, profile_name, values)
 
 
 _HERMES_GATEWAY_ACTIONS = frozenset({"start", "stop", "restart", "drain"})
@@ -1743,6 +1922,185 @@ def toggle_hermes_skill(
 		"name": skill,
 		"enabled": want,
 		"message": _("Enabled {0}").format(skill) if want else _("Disabled {0}").format(skill),
+	}
+
+
+def _wait_hermes_action(
+	settings: dict,
+	action_name: str,
+	*,
+	timeout_s: float = 120.0,
+	poll_s: float = 1.2,
+) -> tuple[bool, str]:
+	"""Poll GET /api/actions/{name}/status until Hermes finishes the spawned CLI."""
+	import time
+
+	action = (action_name or "").strip()
+	if not action:
+		return False, _("Missing install action name from Hermes")
+
+	from urllib.parse import quote
+
+	deadline = time.monotonic() + max(5.0, timeout_s)
+	last_lines: list[str] = []
+	action_path = quote(action, safe="")
+	while time.monotonic() < deadline:
+		ok, data, err = try_request(
+			"GET",
+			f"/api/actions/{action_path}/status",
+			settings=settings,
+			params={"lines": 80},
+			timeout=20,
+		)
+		if not ok or not isinstance(data, dict):
+			return False, err or _("Could not read install status")
+		lines = data.get("lines") if isinstance(data.get("lines"), list) else []
+		if lines:
+			last_lines = [str(x) for x in lines if str(x).strip()]
+		if not data.get("running"):
+			exit_code = data.get("exit_code")
+			tail = "\n".join(last_lines[-12:]).strip()
+			if exit_code in (0, "0"):
+				return True, tail or _("Done")
+			if exit_code is None:
+				return False, tail or _("Action finished with no exit code from Hermes")
+			return False, tail or _("exit {0}").format(exit_code)
+		time.sleep(poll_s)
+
+	tail = "\n".join(last_lines[-8:]).strip()
+	return False, _("Timed out waiting for Hermes") + (f":\n{tail}" if tail else "")
+
+
+@frappe.whitelist(methods=["POST"])
+def install_hermes_skill(
+	identifier: str | None = None,
+	user: str | None = None,
+	profile: str | None = None,
+):
+	"""POST /api/skills/hub/install — URL or hub id (e.g. official/… or https://…/SKILL.md)."""
+	_require_access()
+	ident = (identifier or "").strip()
+	if not ident:
+		frappe.throw(_("Skill URL or hub identifier is required"))
+
+	try:
+		_target, settings = _settings_for_manage_user(user)
+	except Exception as err:
+		return {"ok": False, "message": str(err)}
+
+	profile_name = (profile or "").strip() or _default_hermes_profile(settings)
+	body: dict[str, Any] = {"identifier": ident}
+	if profile_name:
+		body["profile"] = profile_name
+
+	ok, data, err = try_request(
+		"POST",
+		"/api/skills/hub/install",
+		settings=settings,
+		params=_profile_params(profile_name),
+		body=body,
+		timeout=45,
+	)
+	if not ok or not isinstance(data, dict) or data.get("ok") is False:
+		return {
+			"ok": False,
+			"message": err
+			or (data or {}).get("detail")
+			or (data or {}).get("message")
+			or _("Could not start skill install on Hermes"),
+		}
+
+	action = (data.get("name") or "").strip()
+	if not action:
+		# Hermes accepted the spawn but gave no action id — reload may still show it.
+		return {
+			"ok": True,
+			"identifier": ident,
+			"message": _("Install started on Hermes — Reload the skills list in a moment."),
+			"pid": data.get("pid"),
+		}
+
+	done, detail = _wait_hermes_action(settings, action)
+	if not done:
+		return {
+			"ok": False,
+			"identifier": ident,
+			"action": action,
+			"message": _("Install failed for {0}").format(ident)
+			+ (f"\n{detail}" if detail else ""),
+		}
+	return {
+		"ok": True,
+		"identifier": ident,
+		"action": action,
+		"message": _("Installed {0}").format(ident)
+		+ (f"\n{detail}" if detail and detail != _("Done") else ""),
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+def uninstall_hermes_skill(
+	name: str | None = None,
+	user: str | None = None,
+	profile: str | None = None,
+):
+	"""POST /api/skills/hub/uninstall — remove an installed Hermes skill by name."""
+	_require_access()
+	skill = (name or "").strip()
+	if not skill:
+		frappe.throw(_("Skill name is required"))
+
+	try:
+		_target, settings = _settings_for_manage_user(user)
+	except Exception as err:
+		return {"ok": False, "message": str(err)}
+
+	profile_name = (profile or "").strip() or _default_hermes_profile(settings)
+	body: dict[str, Any] = {"name": skill}
+	if profile_name:
+		body["profile"] = profile_name
+
+	ok, data, err = try_request(
+		"POST",
+		"/api/skills/hub/uninstall",
+		settings=settings,
+		params=_profile_params(profile_name),
+		body=body,
+		timeout=45,
+	)
+	if not ok or not isinstance(data, dict) or data.get("ok") is False:
+		return {
+			"ok": False,
+			"message": err
+			or (data or {}).get("detail")
+			or (data or {}).get("message")
+			or _("Could not start skill uninstall on Hermes"),
+		}
+
+	action = (data.get("name") or "").strip()
+	if not action:
+		return {
+			"ok": True,
+			"name": skill,
+			"message": _("Uninstall started on Hermes — Reload the skills list in a moment."),
+			"pid": data.get("pid"),
+		}
+
+	done, detail = _wait_hermes_action(settings, action, timeout_s=90.0)
+	if not done:
+		return {
+			"ok": False,
+			"name": skill,
+			"action": action,
+			"message": _("Uninstall failed for {0}").format(skill)
+			+ (f"\n{detail}" if detail else ""),
+		}
+	return {
+		"ok": True,
+		"name": skill,
+		"action": action,
+		"message": _("Uninstalled {0}").format(skill)
+		+ (f"\n{detail}" if detail and detail != _("Done") else ""),
 	}
 
 
@@ -2028,10 +2386,10 @@ def boot() -> dict[str, Any]:
 		"unavailable_tools": [],
 		"user": user,
 		"permissions": {
-			"OpsAi Settings": [
+			"OpsAi Users": [
 				ptype
 				for ptype in ("read", "write", "create", "delete")
-				if frappe.has_permission("OpsAi Settings", ptype)
+				if frappe.has_permission("OpsAi Users", ptype)
 			]
 		},
 		"hermes_configured": configured,
@@ -2530,7 +2888,11 @@ def _fail_hermes_turn(session: str, message: str):
 	)
 
 
-def _complete_hermes_turn(session: str, message: str) -> str:
+def _complete_hermes_turn(
+	session: str,
+	message: str,
+	attachments: list | None = None,
+) -> str:
 	"""Run one Hermes turn, streaming preview events for SessionStream polls."""
 
 	def on_event(etype: str, payload: dict):
@@ -2539,8 +2901,16 @@ def _complete_hermes_turn(session: str, message: str) -> str:
 		except Exception:
 			pass
 
+	images, files = partition_attachment_ids(attachments)
 	try:
-		assistant = run_gateway_turn(session, message, timeout=300, on_event=on_event)
+		assistant = run_gateway_turn(
+			session,
+			message,
+			timeout=300,
+			on_event=on_event,
+			images=images,
+			files=files,
+		)
 	except HermesError as err:
 		_fail_hermes_turn(session, str(err))
 		raise
@@ -2590,10 +2960,16 @@ def _complete_hermes_turn(session: str, message: str) -> str:
 	return ""
 
 
-def _start_hermes_turn_background(session: str, message: str):
+def _start_hermes_turn_background(
+	session: str,
+	message: str,
+	attachments: list | None = None,
+):
 	"""Non-blocking turn so Desk SessionStream can poll preview mid-reply."""
 	site = frappe.local.site
 	user = frappe.session.user
+	# Snapshot ids — File docs must survive into the worker via commit.
+	attachment_ids = list(attachments or [])
 
 	def _worker():
 		try:
@@ -2601,7 +2977,7 @@ def _start_hermes_turn_background(session: str, message: str):
 			frappe.connect()
 			frappe.set_user(user)
 			try:
-				_complete_hermes_turn(session, message)
+				_complete_hermes_turn(session, message, attachment_ids)
 				# Background threads do not auto-commit — without this, private File
 				# rows roll back on destroy while the Redis transcript keeps their URLs
 				# (Preview/Download then 403 Forbidden).
@@ -2635,6 +3011,17 @@ def run(session: str, message: str, attachments: list | None = None):
 	"""Start a Hermes turn; stream thinking/text/tools into preview while it runs."""
 	_require_access()
 	message = (message or "").strip()
+	if isinstance(attachments, str):
+		try:
+			attachments = json.loads(attachments or "[]")
+		except (TypeError, ValueError):
+			attachments = []
+	if not isinstance(attachments, list):
+		attachments = []
+
+	# OpsPilot: attachment-only turns still need a short caption for Hermes.
+	if not message and attachments:
+		message = caption_for_attachment_ids(attachments)
 	if not message:
 		frappe.throw(_("Message is required"))
 
@@ -2645,10 +3032,10 @@ def run(session: str, message: str, attachments: list | None = None):
 		session,
 		[
 			{"type": "run_started"},
-			{"type": "user_message", "content": [{"type": "text", "text": message}]},
+			{"type": "user_message", "content": user_message_blocks(message, attachments)},
 		],
 	)
-	_start_hermes_turn_background(session, message)
+	_start_hermes_turn_background(session, message, attachments)
 	return {"status": "running"}
 
 
@@ -2794,14 +3181,16 @@ def artifact_file(file_url: str | None = None, fid: str | None = None):
 
 @frappe.whitelist(methods=["POST"])
 def attach_file(file: str, model: str | None = None):
+	"""Stage an uploaded private File for the next Hermes turn (OpsPilot parity)."""
 	_require_access()
-	frappe.throw(_("Attachments are not available with Hermes yet."))
+	return stage_attachment(file, model)
 
 
 @frappe.whitelist(methods=["POST"])
 def cleanup_attachments(attachments: list | None = None, session: str | None = None):
+	"""Discard staged uploads that no accepted turn needs."""
 	_require_access()
-	return {"ok": True}
+	return _cleanup_staged_attachments(attachments, session=session)
 
 
 @frappe.whitelist(methods=["POST"])
@@ -2816,7 +3205,7 @@ def submit_feedback(run_name: str, rating: int, comment: str | None = None):
 	return {"ok": True}
 
 
-# --- setup stubs (Flow provider UI → Hermes uses OpsAi Settings) --------------
+# --- setup stubs (Flow provider UI → Hermes uses OpsAi Users) --------------
 
 
 @frappe.whitelist()
@@ -2828,7 +3217,7 @@ def setup_options():
 @frappe.whitelist(methods=["POST"])
 def setup_connect(provider: str | None = None, api_key: str | None = None, base_url: str | None = None):
 	_require_access()
-	frappe.throw(_("Connect Hermes in OpsAi Settings (Gateway URL and credentials)."))
+	frappe.throw(_("Connect Hermes in OpsAi Users (Gateway URL and credentials)."))
 
 
 @frappe.whitelist()
@@ -2840,13 +3229,13 @@ def setup_services():
 @frappe.whitelist(methods=["POST"])
 def setup_add_model(provider: str | None = None, model_id: str | None = None, for_chat: int | None = None):
 	_require_access()
-	frappe.throw(_("Models come from your Hermes gateway. Configure OpsAi Settings instead."))
+	frappe.throw(_("Models come from your Hermes gateway. Configure OpsAi Users instead."))
 
 
 @frappe.whitelist(methods=["POST"])
 def setup_remove_provider(provider: str | None = None):
 	_require_access()
-	frappe.throw(_("Providers are managed by Hermes. Configure OpsAi Settings instead."))
+	frappe.throw(_("Providers are managed by Hermes. Configure OpsAi Users instead."))
 
 
 # legacy one-shot chat (desktop / simple clients)

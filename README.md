@@ -36,9 +36,9 @@ After install, assign the **OpsAi User** role to users who should see OpsAi on D
 
 ## Usage
 
-### OpsAi Settings (Hermes assignment)
+### OpsAi Users (Hermes assignment)
 
-1. Open **OpsAi Settings** in Desk.
+1. Open **OpsAi Users** in Desk.
 2. **New** — choose **User** and a unique **Gateway URL** (host + port; one Hermes agent port per user). No defaults are filled in. Use **Test**, then **Save**.
 3. On the saved record, open **Sign in**, enter Hermes username/password (or API key), and click **Connect**. Credentials are stored in Frappe Password fields; Connect reuses them and does not re-prompt unless Hermes rejects the saved password.
 4. **Disconnect** clears the Hermes session and marks the assignment offline. Chat stays offline until Connect runs again (no silent auto-login).
@@ -52,12 +52,12 @@ After install, assign the **OpsAi User** role to users who should see OpsAi on D
 
 ### Hermes workspace (Desk)
 
-When Connected, OpsAi Settings proxies live Hermes tools (model, identity/memory, config, skills, cron, sessions, logs, gateway restart) — OpsAi does not store those files locally.
+When Connected, OpsAi Users proxies live Hermes tools (model, identity/memory, config, skills, cron, sessions, logs, gateway restart) — OpsAi does not store those files locally.
 
 ## API
 
 - `GET /api/method/opsai.api.ping` — confirms the site supports OpsAi
-- `GET /api/method/opsai.api.get_my_opsai_settings` — caller’s AI settings (Password fields decrypted)
+- `GET /api/method/opsai.api.get_my_opsai_users` — caller’s AI settings (Password fields decrypted)
 - `POST /api/method/opsai.api.connect_hermes` — Connect (uses saved credentials; prefers a live session when cookies still work)
 - `POST /api/method/opsai.api.disconnect_hermes` — sticky Disconnect (keeps username/password; clears session cookies)
 - `GET /api/method/opsai.api.test_connection` — Hermes reachability (does not auto-login after Disconnect)

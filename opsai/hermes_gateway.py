@@ -74,7 +74,7 @@ def mint_ws_ticket(settings: dict[str, Any] | None = None) -> str:
 	settings = ensure_session(settings or get_user_settings())
 	headers = _auth_headers(settings)
 	if "Cookie" not in headers and "Authorization" not in headers:
-		raise HermesError(_("Not connected to Hermes. Open OpsAi Settings and click Connect."))
+		raise HermesError(_("Not connected to Hermes. Open OpsAi Users and click Connect."))
 
 	# Prefer cookie jar for ticket mint (password mode).
 	url = urljoin(_base_url(settings), "api/auth/ws-ticket")
@@ -100,7 +100,7 @@ def mint_ws_ticket(settings: dict[str, Any] | None = None) -> str:
 	except HTTPError as err:
 		raw = err.read().decode("utf-8", errors="replace") if err.fp else str(err)
 		if err.code in (401, 403):
-			raise HermesError(_("Hermes session expired — open OpsAi Settings and click Connect.")) from err
+			raise HermesError(_("Hermes session expired — open OpsAi Users and click Connect.")) from err
 		raise HermesError(_("WS ticket mint failed ({0}): {1}").format(err.code, _error_detail(raw)[:400])) from err
 	except URLError as err:
 		raise HermesError(_("Could not reach Hermes: {0}").format(err.reason or err)) from err
@@ -125,7 +125,7 @@ def resolve_ws_url(settings: dict[str, Any] | None = None) -> str:
 	if token:
 		return _ws_url(settings, token=token)
 
-	raise HermesError(_("Not connected to Hermes. Open OpsAi Settings and click Connect."))
+	raise HermesError(_("Not connected to Hermes. Open OpsAi Users and click Connect."))
 
 
 class GatewayClient:
@@ -374,6 +374,46 @@ def resume_gateway_session(
 	return stored_session_id
 
 
+def _attach_files_to_session(
+	gw: GatewayClient,
+	session_id: str,
+	*,
+	images: list[dict[str, Any]] | None = None,
+	files: list[dict[str, Any]] | None = None,
+) -> list[str]:
+	"""OpsPilot parity: image.attach_bytes + file.attach → @file: refs for the prompt."""
+	file_refs: list[str] = []
+	for img in images or []:
+		gw.rpc(
+			"image.attach_bytes",
+			{
+				"session_id": session_id,
+				"content_base64": img.get("content_base64") or "",
+				"filename": img.get("file_name") or img.get("name") or "image.png",
+			},
+			timeout=120,
+		)
+	for row in files or []:
+		name = row.get("file_name") or row.get("name") or "file"
+		data_url = row.get("data_url") or ""
+		if not data_url:
+			raise HermesError(_("Could not attach {0}: missing file bytes").format(name))
+		result = gw.rpc(
+			"file.attach",
+			{
+				"session_id": session_id,
+				"name": name,
+				"data_url": data_url,
+			},
+			timeout=180,
+		)
+		if not isinstance(result, dict) or not result.get("attached") or not result.get("ref_text"):
+			detail = (result or {}).get("message") if isinstance(result, dict) else None
+			raise HermesError(detail or _("Could not attach {0}").format(name))
+		file_refs.append(str(result["ref_text"]))
+	return file_refs
+
+
 def run_gateway_turn(
 	session: str,
 	message: str,
@@ -381,10 +421,13 @@ def run_gateway_turn(
 	settings: dict[str, Any] | None = None,
 	timeout: float = 300,
 	on_event=None,
+	images: list[dict[str, Any]] | None = None,
+	files: list[dict[str, Any]] | None = None,
 ) -> str:
-	"""Resume (or treat as live) + prompt.submit + wait for message.complete."""
+	"""Resume (or treat as live) + optional attaches + prompt.submit + wait for complete."""
 	message = (message or "").strip()
-	if not message:
+	has_attachments = bool(images or files)
+	if not message and not has_attachments:
 		raise HermesError(_("Message is required"))
 
 	with GatewayClient(settings, timeout=30) as gw:
@@ -410,10 +453,22 @@ def run_gateway_turn(
 					live = str(created.get("session_id") or created.get("stored_session_id") or session)
 			# else: try submit with the given id
 
-		try:
+		def _submit(live_id: str) -> str:
+			file_refs = _attach_files_to_session(gw, live_id, images=images, files=files)
+			final_text = message
+			if file_refs:
+				final_text = f"{message}\n\n{chr(10).join(file_refs)}" if message else "\n".join(file_refs)
+			if not (final_text or "").strip() and has_attachments:
+				# Images alone still need a caption for prompt.submit.
+				final_text = _("What do you see in this image?") if images and not files else _(
+					"Please review the attached file(s)."
+				)
 			return gw.prompt_turn(
-				session_id=live, text=message, timeout=timeout, on_event=on_event
+				session_id=live_id, text=final_text, timeout=timeout, on_event=on_event
 			)
+
+		try:
+			return _submit(live)
 		except HermesError as err:
 			if "session not found" not in str(err).lower() and "4001" not in str(err):
 				raise
@@ -424,6 +479,4 @@ def run_gateway_turn(
 			live = str(created.get("session_id") or created.get("stored_session_id") or "")
 			if not live:
 				raise
-			return gw.prompt_turn(
-				session_id=live, text=message, timeout=timeout, on_event=on_event
-			)
+			return _submit(live)

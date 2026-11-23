@@ -7,11 +7,13 @@ app_license = "MIT"
 app_icon = "octicon octicon-comment-discussion"
 app_color = "#3B87F7"
 app_logo_url = "/assets/opsai/images/opsai-logo.svg"
-app_home = "/opsai"
+# Desk workspace (not /opsai full-page chat). Non-desk app_home makes the dock
+# treat OpsAi as an external app and window.location to /opsai.
+app_home = "/desk/opsai"
 
 required_apps = []
 
-# Apps screen tile (Frappe v16+ desk) → full-page OpsAi chat
+# Apps screen tile (Frappe v16+ desk) → OpsAi workspace inside Desk
 add_to_apps_screen = [
 	{
 		"name": app_name,
@@ -26,11 +28,16 @@ add_to_apps_screen = [
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/opsai/css/opsai.css"
-# Dock icon + right-side OpsAi panel (Flow fork: opsai.chat island)
+# Dock icon + right-side OpsAi panel (Flow fork: opsai.chat island).
+# CSS hides the sidebar OpsAi row when the pinned dock already shows the icon.
+# ?v= busts browser cache when dock/launcher behavior changes (plain public JS).
+app_include_css = [
+	"/assets/opsai/css/opsai_dock.css?v=7",
+	"/assets/opsai/css/opsai_users_form.css?v=3",
+]
 app_include_js = [
-	"/assets/opsai/js/opsai_dock.js",
-	"/assets/opsai/js/opsai_launcher.js",
+	"/assets/opsai/js/opsai_dock.js?v=7",
+	"/assets/opsai/js/opsai_launcher.js?v=7",
 ]
 
 # include js, css files in header of web template
@@ -125,11 +132,11 @@ extend_bootinfo = "opsai.boot.extend_bootinfo"
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
-	"OpsAi Settings": "opsai.opsai.doctype.opsai_settings.opsai_settings.get_permission_query_conditions",
+	"OpsAi Users": "opsai.opsai.doctype.opsai_users.opsai_users.get_permission_query_conditions",
 }
 
 has_permission = {
-	"OpsAi Settings": "opsai.opsai.doctype.opsai_settings.opsai_settings.has_permission",
+	"OpsAi Users": "opsai.opsai.doctype.opsai_users.opsai_users.has_permission",
 }
 
 # DocType Class

@@ -30,7 +30,7 @@ def normalize_gateway_url(url: str | None) -> str:
 	return f"{scheme}://{netloc}"
 
 
-class OpsAiSettings(Document):
+class OpsAiUsers(Document):
 	def validate(self):
 		if not self.user:
 			frappe.throw(_("User is required"))
@@ -45,14 +45,14 @@ class OpsAiSettings(Document):
 			if previous and previous.user and previous.user != self.user:
 				frappe.throw(
 					_(
-						"User cannot be changed on OpsAi Settings. "
+						"User cannot be changed on OpsAi Users. "
 						"Delete this record and create settings for the new user."
 					)
 				)
 
 		if frappe.session.user != "Administrator" and "System Manager" not in frappe.get_roles():
 			if self.user != frappe.session.user:
-				frappe.throw(_("You can only manage your own OpsAi Settings"))
+				frappe.throw(_("You can only manage your own OpsAi Users"))
 
 		if not (self.gateway_url or "").strip():
 			frappe.throw(_("Gateway URL is required"))
@@ -73,7 +73,7 @@ class OpsAiSettings(Document):
 			return
 
 		rows = frappe.get_all(
-			"OpsAi Settings",
+			"OpsAi Users",
 			fields=["name", "user", "gateway_url"],
 			filters={"name": ["!=", self.name or ""]},
 			limit_page_length=500,
@@ -101,7 +101,7 @@ def get_permission_query_conditions(user: str | None = None) -> str:
 	user = user or frappe.session.user
 	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
 		return ""
-	return f"`tabOpsAi Settings`.user = {frappe.db.escape(user)}"
+	return f"`tabOpsAi Users`.user = {frappe.db.escape(user)}"
 
 
 def has_permission(doc, ptype: str = "read", user: str | None = None) -> bool:

@@ -1,7 +1,7 @@
 // Copyright (c) 2026, OpsAi and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on("OpsAi Settings", {
+frappe.ui.form.on("OpsAi Users", {
 	before_save(frm) {
 		// Blank Password inputs must not wipe secrets already stored in __Auth.
 		["gateway_password", "session_token", "session_cookies"].forEach((name) => {
@@ -19,7 +19,7 @@ frappe.ui.form.on("OpsAi Settings", {
 
 	refresh(frm) {
 		frm.clear_custom_buttons();
-		frm.$wrapper.addClass("opsai-settings-form");
+		frm.$wrapper.addClass("opsai-users-form opsai-settings-form");
 		inject_opsai_styles();
 
 		if (frm.is_new()) {
@@ -32,11 +32,11 @@ frappe.ui.form.on("OpsAi Settings", {
 				frm.refresh_field("user");
 				frm.refresh_field("gateway_url");
 			}
-			setup_new_opsai_settings(frm);
+			setup_new_opsai_users(frm);
 			return;
 		}
 
-		show_full_opsai_settings(frm);
+		show_full_opsai_users(frm);
 		setup_auth_cards(frm); // includes URL Test + Gateway/Sign-in side-by-side cards
 		setup_hermes_hub(frm);
 		refresh_opsai_connection_banner(frm);
@@ -82,7 +82,7 @@ function dismantle_opsai_create_card(frm) {
 	});
 }
 
-function setup_new_opsai_settings(frm) {
+function setup_new_opsai_users(frm) {
 	// Tear down full-form chrome without deleting field controls.
 	frm.$wrapper.find(".opsai-hub, .opsai-hub-empty, .opsai-connect-grid").remove();
 	dismantle_opsai_create_card(frm);
@@ -131,7 +131,7 @@ function setup_new_opsai_settings(frm) {
 			<div class="opsai-auth-card-head">
 				<span class="opsai-auth-card-icon">${opsai_icon("server", "sm")}</span>
 				<div>
-					<div class="opsai-auth-card-title">${__("Create OpsAi Settings")}</div>
+					<div class="opsai-auth-card-title">${__("Create OpsAi Users")}</div>
 					<div class="opsai-auth-card-sub">${__(
 						"One Hermes agent per user — same host with different ports is OK (e.g. :32798, :32788)."
 					)}</div>
@@ -145,7 +145,7 @@ function setup_new_opsai_settings(frm) {
 	});
 }
 
-function show_full_opsai_settings(frm) {
+function show_full_opsai_users(frm) {
 	frm.dashboard.clear_headline();
 	dismantle_opsai_create_card(frm);
 	frm.set_df_property("gateway_section", "label", __("Connection"));
@@ -176,631 +176,15 @@ function show_full_opsai_settings(frm) {
 }
 
 function inject_opsai_styles() {
-	let css = document.getElementById("opsai-settings-css");
-	if (!css) {
-		css = document.createElement("style");
-		css.id = "opsai-settings-css";
-		document.head.appendChild(css);
-	}
-	css.textContent = `
-		.opsai-settings-form .form-section {
-			margin-bottom: 8px;
-		}
-		.opsai-settings-form .form-section .section-head {
-			font-size: var(--text-sm, 13px);
-			font-weight: var(--weight-medium, 500);
-			color: var(--text-color, var(--ink-gray-8));
-			letter-spacing: 0.01em;
-			padding-bottom: 6px;
-			border-bottom: 1px solid var(--border-color, var(--outline-gray-2));
-			margin-bottom: 12px;
-		}
-		.opsai-url-row { display: flex; gap: 8px; align-items: stretch; width: 100%; }
-		.opsai-url-row .opsai-url-input { flex: 1 1 auto; min-width: 0; }
-		.opsai-url-row .opsai-url-test {
-			flex: 0 0 auto; white-space: nowrap; height: var(--input-height, 28px);
-		}
-		.opsai-connect-grid {
-			display: grid;
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-			gap: 12px;
-			margin: 8px 0 16px;
-			align-items: stretch;
-		}
-		.opsai-auth-card {
-			border: 1px solid var(--border-color, var(--outline-gray-2));
-			border-left: 3px solid var(--ink-blue-4, var(--blue-400, #5aa7ef));
-			border-radius: var(--border-radius-lg, 12px);
-			padding: 14px 16px 16px;
-			margin: 0;
-			background: var(--surface-elevation-2, var(--fg-color, #fff));
-			box-shadow: var(--shadow-sm, none);
-			min-width: 0;
-			height: 100%;
-			display: flex;
-			flex-direction: column;
-		}
-		.opsai-auth-card.opsai-gateway-card {
-			border-left-color: var(--ink-orange-4, var(--orange-400, #edb85c));
-		}
-		.opsai-auth-card.opsai-gateway-card .opsai-auth-card-icon {
-			background: var(--bg-orange, #fff4e5);
-			color: var(--text-on-orange, var(--ink-orange-5, #c47a0a));
-		}
-		.opsai-auth-card .opsai-auth-card-body {
-			flex: 1;
-		}
-		.opsai-field-park {
-			display: none !important;
-		}
-		.opsai-create-card {
-			border: 1px solid var(--border-color, var(--outline-gray-2));
-			border-left: 3px solid var(--ink-blue-4, var(--blue-400, #5aa7ef));
-			border-radius: var(--border-radius-lg, 12px);
-			padding: 14px 16px 16px;
-			margin: 8px 0 16px;
-			background: var(--surface-elevation-2, var(--fg-color, #fff));
-			box-shadow: var(--shadow-sm, none);
-		}
-		.opsai-create-card .frappe-control { margin-bottom: 10px; }
-		.opsai-auth-card .opsai-auth-card-head {
-			display: flex; align-items: center; gap: 8px; margin: 0 0 12px;
-		}
-		.opsai-auth-card .opsai-auth-card-icon {
-			display: inline-flex; align-items: center; justify-content: center;
-			width: 28px; height: 28px; border-radius: 8px;
-			background: var(--bg-blue, var(--surface-blue-2, #e6f2ff));
-			color: var(--text-on-blue, var(--ink-blue-6, #2490ef));
-			flex: 0 0 auto;
-		}
-		.opsai-auth-card .opsai-auth-card-icon .icon { --icon-stroke: currentColor; }
-		.opsai-auth-card .opsai-auth-card-title {
-			font-size: var(--text-sm, 12px);
-			font-weight: var(--weight-medium, 500);
-			color: var(--text-muted, var(--ink-gray-6));
-			margin: 0;
-			text-transform: uppercase;
-			letter-spacing: 0.04em;
-		}
-		.opsai-auth-card .opsai-auth-card-sub {
-			font-size: 12px;
-			color: var(--text-muted, var(--ink-gray-5));
-			font-weight: 400;
-			text-transform: none;
-			letter-spacing: normal;
-			margin-top: 1px;
-		}
-		.opsai-auth-card .form-column, .opsai-auth-card .frappe-control { margin-bottom: 8px; }
-		.opsai-connect-row { display: flex; justify-content: flex-end; margin-top: 12px; gap: 8px; }
-		.opsai-url-hint {
-			font-size: var(--text-sm, 12px); margin-top: 4px;
-		}
-		.opsai-url-hint.ok { color: var(--green-600, var(--ink-green-5, #16794c)); }
-		.opsai-url-hint.bad { color: var(--red-600, var(--ink-red-5, #e24c4c)); }
-		.opsai-model-dialog .opsai-model-actions {
-			display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end;
-			margin: 8px 0 0;
-		}
-		.opsai-model-dialog .opsai-model-actions .btn-primary {
-			background: var(--bg-blue, #e6f2ff);
-			color: var(--text-on-blue, var(--ink-blue-6, #2490ef));
-			border-color: transparent;
-		}
-		/* Model is edited via hub tile dialog — keep DocType fields off the form surface. */
-		.opsai-settings-form .frappe-control[data-fieldname="default_provider"],
-		.opsai-settings-form .frappe-control[data-fieldname="default_model"] {
-			display: none !important;
-		}
-		.opsai-hub-tile .opsai-hub-tile-label.opsai-model-tile-label {
-			font-family: var(--font-mono, ui-monospace, monospace);
-			word-break: break-all;
-		}
-
-		/* Hermes hub — grouped tiles (Identity / Memory / Config / Manage) */
-		.opsai-hub {
-			margin: 12px 0 20px;
-			padding: 0;
-			border: 1px solid var(--border-color, var(--outline-gray-2));
-			border-radius: calc(var(--border-radius-lg, 10px) + 2px);
-			background: var(--surface-elevation-2, var(--fg-color, #fff));
-			box-shadow: var(--shadow-sm, none);
-			overflow: hidden;
-		}
-		.opsai-hub-header {
-			display: flex; align-items: flex-start; justify-content: space-between;
-			gap: 12px; flex-wrap: wrap;
-			padding: 16px 18px;
-			background: linear-gradient(
-				135deg,
-				var(--bg-blue, var(--surface-blue-2, #e8f3ff)) 0%,
-				var(--surface-elevation-2, var(--fg-color, #fff)) 62%
-			);
-			border-bottom: 1px solid var(--border-color, var(--outline-gray-2));
-		}
-		.opsai-hub-header-text { min-width: 0; }
-		.opsai-hub-kicker {
-			display: inline-flex; align-items: center; gap: 6px;
-			font-size: 11px; font-weight: var(--weight-medium, 500);
-			text-transform: uppercase; letter-spacing: 0.06em;
-			color: var(--text-on-blue, var(--ink-blue-5, #2490ef));
-			margin-bottom: 4px;
-		}
-		.opsai-hub-kicker .icon { --icon-stroke: currentColor; }
-		.opsai-hub-title {
-			font-size: var(--text-lg, 16px);
-			font-weight: var(--weight-semibold, 600);
-			color: var(--heading-color, var(--ink-gray-9));
-			margin: 0 0 4px;
-			line-height: 1.3;
-		}
-		.opsai-hub-subtitle {
-			font-size: var(--text-sm, 12px);
-			color: var(--text-muted, var(--ink-gray-6));
-			margin: 0;
-			max-width: 46rem;
-			line-height: 1.45;
-		}
-		.opsai-hub-body { padding: 12px 14px 16px; display: flex; flex-direction: column; gap: 12px; }
-		.opsai-hub-row {
-			display: grid;
-			gap: 12px;
-			align-items: stretch;
-		}
-		.opsai-hub-row-triple {
-			grid-template-columns: repeat(3, minmax(0, 1fr));
-		}
-		.opsai-hub-group {
-			border: 1px solid var(--border-color, var(--outline-gray-2));
-			border-radius: var(--border-radius-lg, 10px);
-			background: var(--subtle-fg, var(--bg-color, #f8fafc));
-			padding: 12px;
-			min-width: 0;
-			display: flex;
-			flex-direction: column;
-			height: 100%;
-		}
-		.opsai-hub-row .opsai-hub-group .opsai-hub-group-desc {
-			display: -webkit-box;
-			-webkit-line-clamp: 2;
-			-webkit-box-orient: vertical;
-			overflow: hidden;
-		}
-		.opsai-hub-row .opsai-hub-tiles {
-			grid-template-columns: 1fr;
-			flex: 1;
-		}
-		.opsai-hub-row .opsai-hub-tile {
-			height: 100%;
-		}
-		.opsai-hub-group-head {
-			display: flex; align-items: flex-start; gap: 10px;
-			margin-bottom: 10px;
-		}
-		.opsai-hub-group-icon {
-			display: inline-flex; align-items: center; justify-content: center;
-			width: 32px; height: 32px; border-radius: 9px; flex: 0 0 auto;
-		}
-		.opsai-hub-group-icon .icon { --icon-stroke: currentColor; width: 16px; height: 16px; }
-		.opsai-hub-group-icon.tone-blue {
-			background: var(--bg-blue, #e6f2ff); color: var(--text-on-blue, var(--ink-blue-6, #2490ef));
-		}
-		.opsai-hub-group-icon.tone-cyan {
-			background: var(--bg-cyan, #e0f7fa); color: var(--text-on-cyan, var(--ink-cyan-5, #0891b2));
-		}
-		.opsai-hub-group-icon.tone-orange {
-			background: var(--bg-orange, #fff4e5); color: var(--text-on-orange, var(--ink-orange-5, #c47a0a));
-		}
-		.opsai-hub-group-icon.tone-purple {
-			background: var(--bg-purple, #f3e8ff); color: var(--text-on-purple, var(--ink-purple-5, #7c3aed));
-		}
-		.opsai-hub-group-icon.tone-red {
-			background: var(--bg-red, #fde8e8); color: var(--text-on-red, var(--ink-red-5, #e24c4c));
-		}
-		.opsai-hub-group-title {
-			font-size: 13px; font-weight: var(--weight-medium, 500);
-			color: var(--heading-color, var(--ink-gray-9));
-			margin: 0;
-		}
-		.opsai-hub-group-desc {
-			font-size: 12px; color: var(--text-muted, var(--ink-gray-6));
-			margin: 2px 0 0; line-height: 1.4;
-		}
-		.opsai-hub-tiles {
-			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-			gap: 8px;
-		}
-		.opsai-hub-tile {
-			display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
-			text-align: left; width: 100%;
-			padding: 12px;
-			border: 1px solid var(--border-color, var(--outline-gray-2));
-			border-radius: var(--border-radius, 8px);
-			background: var(--fg-color, #fff);
-			color: var(--text-color, var(--ink-gray-8));
-			cursor: pointer;
-			transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
-			box-shadow: none;
-		}
-		.opsai-hub-tile:hover {
-			border-color: var(--primary, var(--ink-blue-4, #5aa7ef));
-			box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.04));
-			transform: translateY(-1px);
-		}
-		.opsai-hub-tile:focus-visible {
-			outline: 2px solid var(--primary, #2490ef);
-			outline-offset: 1px;
-		}
-		.opsai-hub-tile-icon {
-			display: inline-flex; align-items: center; justify-content: center;
-			width: 28px; height: 28px; border-radius: 8px;
-		}
-		.opsai-hub-tile-icon .icon { --icon-stroke: currentColor; }
-		.opsai-hub-tile.tone-blue .opsai-hub-tile-icon {
-			background: var(--bg-blue, #e6f2ff); color: var(--text-on-blue, var(--ink-blue-6));
-		}
-		.opsai-hub-tile.tone-cyan .opsai-hub-tile-icon {
-			background: var(--bg-cyan, #e0f7fa); color: var(--text-on-cyan, #0891b2);
-		}
-		.opsai-hub-tile.tone-green .opsai-hub-tile-icon {
-			background: var(--bg-green, #e7f5ee); color: var(--text-on-green, var(--ink-green-5, #16794c));
-		}
-		.opsai-hub-tile.tone-orange .opsai-hub-tile-icon {
-			background: var(--bg-orange, #fff4e5); color: var(--text-on-orange, #c47a0a);
-		}
-		.opsai-hub-tile.tone-yellow .opsai-hub-tile-icon {
-			background: var(--bg-yellow, #fff9e0); color: var(--text-on-yellow, #a16207);
-		}
-		.opsai-hub-tile.tone-purple .opsai-hub-tile-icon {
-			background: var(--bg-purple, #f3e8ff); color: var(--text-on-purple, #7c3aed);
-		}
-		.opsai-hub-tile.tone-gray .opsai-hub-tile-icon {
-			background: var(--bg-gray, #f0f2f5); color: var(--text-muted, var(--ink-gray-7));
-		}
-		.opsai-hub-tile.tone-red .opsai-hub-tile-icon {
-			background: var(--bg-red, #fde8e8); color: var(--text-on-red, #e24c4c);
-		}
-		.opsai-hub-tile-label {
-			font-size: 13px; font-weight: var(--weight-medium, 500);
-			color: var(--heading-color, var(--ink-gray-9));
-			font-family: var(--font-mono, ui-monospace, monospace);
-		}
-		.opsai-hub-tile-meta {
-			font-size: 11px; color: var(--text-muted, var(--ink-gray-6));
-			line-height: 1.35;
-		}
-		.opsai-hub-tile.opsai-hub-tile-danger {
-			border-color: var(--red-200, #f5c6c6);
-			background: var(--bg-red, #fdf2f2);
-		}
-		.opsai-hub-tile.opsai-hub-tile-danger:hover {
-			border-color: var(--red-400, #e24c4c);
-		}
-		.opsai-hub-tile .opsai-hub-tile-status {
-			display: inline-flex;
-			align-items: center;
-			gap: 6px;
-			margin-top: 2px;
-		}
-		.opsai-gateway-dialog .opsai-gateway-actions {
-			display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 10px;
-		}
-		.opsai-gateway-dialog .opsai-gateway-platforms {
-			margin: 0 0 10px;
-			padding: 0;
-			list-style: none;
-			border: 1px solid var(--border-color, var(--outline-gray-2));
-			border-radius: var(--border-radius, 8px);
-			overflow: hidden;
-			background: var(--fg-color, #fff);
-		}
-		.opsai-gateway-dialog .opsai-gateway-platforms li {
-			display: flex; justify-content: space-between; gap: 8px;
-			padding: 8px 10px;
-			border-bottom: 1px solid var(--border-color, #e2e6ea);
-			font-size: 12px;
-		}
-		.opsai-gateway-dialog .opsai-gateway-platforms li:last-child { border-bottom: 0; }
-		.opsai-gateway-dialog .opsai-gateway-platforms .name {
-			font-family: var(--font-mono, ui-monospace, monospace);
-			font-weight: var(--weight-medium, 500);
-		}
-		.opsai-gateway-dialog .opsai-gateway-meta {
-			font-size: 12px; color: var(--text-muted); margin: 0 0 8px;
-		}
-		.opsai-hub-empty {
-			margin: 12px 0 20px; padding: 16px 18px;
-			border: 1px dashed var(--border-color, var(--outline-gray-2));
-			border-radius: var(--border-radius-lg, 10px);
-			background: var(--subtle-fg, var(--bg-color, #f8fafc));
-			display: flex; gap: 12px; align-items: flex-start;
-		}
-		.opsai-hub-empty-icon {
-			display: inline-flex; align-items: center; justify-content: center;
-			width: 36px; height: 36px; border-radius: 10px; flex: 0 0 auto;
-			background: var(--bg-orange, #fff4e5); color: var(--text-on-orange, #c47a0a);
-		}
-		.opsai-hub-empty-icon .icon { --icon-stroke: currentColor; }
-		.opsai-hub-empty-title {
-			font-size: 13px; font-weight: var(--weight-medium, 500);
-			color: var(--heading-color, var(--ink-gray-9)); margin: 0 0 2px;
-		}
-		.opsai-hub-empty-text {
-			font-size: 12px; color: var(--text-muted); margin: 0; line-height: 1.45;
-		}
-		.opsai-env-editor {
-			max-height: min(70vh, 640px);
-			overflow: auto;
-			border: 1px solid var(--border-color, #d1d8dd);
-			border-radius: 8px;
-			padding: 8px;
-			background: var(--bg-color, #f5f7fa);
-		}
-		.opsai-env-row {
-			display: grid;
-			grid-template-columns: minmax(140px, 220px) 1fr auto;
-			gap: 8px;
-			align-items: start;
-			padding: 8px;
-			margin-bottom: 6px;
-			border-radius: 6px;
-			background: var(--fg-color, #fff);
-			border: 1px solid var(--border-color, #e2e6ea);
-		}
-		.opsai-env-row .opsai-env-key {
-			font-family: var(--font-mono, ui-monospace, monospace);
-			font-size: 12px;
-			font-weight: 600;
-			word-break: break-all;
-			padding-top: 6px;
-		}
-		.opsai-env-row .opsai-env-meta {
-			font-size: 11px;
-			color: var(--text-muted, #6c7680);
-			font-weight: 400;
-			margin-top: 2px;
-		}
-		.opsai-env-row .opsai-env-value {
-			width: 100%;
-			min-height: 30px;
-			font-family: var(--font-mono, ui-monospace, monospace);
-			font-size: 12px;
-		}
-		.opsai-env-row .opsai-env-actions {
-			display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end;
-		}
-		.opsai-env-add {
-			display: grid;
-			grid-template-columns: minmax(140px, 220px) 1fr auto;
-			gap: 8px;
-			align-items: center;
-			margin-top: 10px;
-			padding: 8px;
-			border: 1px dashed var(--border-color, #d1d8dd);
-			border-radius: 6px;
-			background: var(--fg-color, #fff);
-		}
-		.opsai-env-add input {
-			width: 100%;
-			font-family: var(--font-mono, ui-monospace, monospace);
-			font-size: 12px;
-		}
-		@media (max-width: 768px) {
-			.opsai-env-row, .opsai-env-add {
-				grid-template-columns: 1fr;
-			}
-		}
-		/* Plain Desk form-control textarea — force book weight (Inter var can look heavy at 420). */
-		.opsai-soul-editor .opsai-soul-label {
-			display: block;
-			margin-bottom: 6px;
-			font-size: var(--text-sm, 13px);
-			font-weight: var(--weight-medium, var(--font-weight-medium, 500));
-			color: var(--text-muted, var(--ink-gray-7));
-		}
-		.opsai-soul-editor .opsai-soul-label .reqd {
-			color: var(--red-500, #e24c4c);
-		}
-		.opsai-soul-editor textarea.opsai-soul-textarea.form-control {
-			display: block;
-			width: 100%;
-			min-height: min(60vh, 480px);
-			height: min(60vh, 480px);
-			resize: vertical;
-			white-space: pre-wrap;
-			overflow-wrap: anywhere;
-			word-break: break-word;
-			line-height: 1.5;
-			letter-spacing: normal;
-			font-family: var(--font-stack);
-			font-size: var(--text-base, 14px);
-			font-weight: 400 !important;
-			font-variation-settings: "wght" 400;
-			color: var(--text-color, var(--ink-gray-9));
-			background-color: var(--control-bg, var(--bg-color, #fff));
-			border: 1px solid var(--border-color, var(--outline-gray-2, #d1d8dd));
-			border-radius: var(--border-radius, 8px);
-			padding: 8px 10px;
-			box-shadow: none;
-			-webkit-font-smoothing: antialiased;
-			-moz-osx-font-smoothing: grayscale;
-		}
-		.opsai-soul-editor textarea.opsai-soul-textarea.form-control:focus {
-			border-color: var(--primary, var(--blue-500, #2490ef));
-			outline: none;
-			box-shadow: none;
-		}
-		.opsai-soul-editor .opsai-char-count {
-			display: flex;
-			flex-wrap: wrap;
-			justify-content: space-between;
-			gap: 8px;
-			margin-top: 6px;
-			font-size: 12px;
-			color: var(--text-muted, #6c7680);
-		}
-		.opsai-soul-editor .opsai-char-count .opsai-char-stats {
-			margin-left: auto;
-			font-variant-numeric: tabular-nums;
-		}
-		.opsai-soul-editor .opsai-char-count.near .opsai-char-stats {
-			color: var(--orange-600, #c47a0a);
-		}
-		.opsai-soul-editor .opsai-char-count.full .opsai-char-stats,
-		.opsai-soul-editor .opsai-char-count.over .opsai-char-stats {
-			color: var(--red-600, #e24c4c);
-			font-weight: var(--weight-medium, 500);
-		}
-		.opsai-manage-toolbar {
-			display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-			margin-bottom: 10px;
-		}
-		.opsai-manage-list {
-			max-height: min(65vh, 560px);
-			overflow: auto;
-			border: 1px solid var(--border-color, #d1d8dd);
-			border-radius: 8px;
-			background: var(--bg-color, #f5f7fa);
-		}
-		.opsai-manage-row {
-			display: grid;
-			grid-template-columns: 1fr auto;
-			gap: 8px;
-			align-items: start;
-			padding: 10px 12px;
-			border-bottom: 1px solid var(--border-color, #e2e6ea);
-			background: var(--fg-color, #fff);
-		}
-		.opsai-manage-row:last-child { border-bottom: 0; }
-		.opsai-manage-row .opsai-manage-title {
-			font-weight: var(--weight-medium, 500);
-			font-size: 13px;
-		}
-		.opsai-manage-row .opsai-manage-meta {
-			font-size: 12px;
-			color: var(--text-muted, #6c7680);
-			margin-top: 2px;
-		}
-		.opsai-manage-row .opsai-manage-actions {
-			display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end;
-		}
-		.opsai-logs-view {
-			max-height: min(65vh, 560px);
-			overflow: auto;
-			font-family: var(--font-mono, ui-monospace, monospace);
-			font-size: 11px;
-			font-weight: 400;
-			line-height: 1.45;
-			white-space: pre-wrap;
-			word-break: break-word;
-			background: var(--fg-color, #fff);
-			border: 1px solid var(--border-color, #d1d8dd);
-			border-radius: 8px;
-			padding: 10px 12px;
-			color: var(--text-color);
-		}
-		.opsai-restart-status {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-			margin: 0 0 10px;
-			flex-wrap: wrap;
-		}
-		.opsai-restart-status .opsai-restart-detail {
-			color: var(--text-muted);
-			font-size: 12px;
-		}
-		.opsai-restart-log {
-			max-height: min(55vh, 480px);
-			min-height: 160px;
-		}
-		.opsai-memory-editor {
-			max-height: min(65vh, 560px);
-			overflow: auto;
-			border: 1px solid var(--border-color, #d1d8dd);
-			border-radius: 8px;
-			padding: 8px;
-			background: var(--bg-color, #f5f7fa);
-		}
-		.opsai-memory-row {
-			display: grid;
-			grid-template-columns: 56px 1fr auto;
-			gap: 8px;
-			align-items: start;
-			padding: 8px;
-			margin-bottom: 6px;
-			border-radius: 6px;
-			background: var(--fg-color, #fff);
-			border: 1px solid var(--border-color, #e2e6ea);
-		}
-		.opsai-memory-row .opsai-memory-index {
-			font-size: 12px;
-			font-weight: var(--weight-medium, 500);
-			color: var(--text-muted, #6c7680);
-			padding-top: 8px;
-		}
-		.opsai-memory-row textarea.opsai-memory-value {
-			width: 100%;
-			min-height: 72px;
-			resize: vertical;
-			font-family: var(--font-stack);
-			font-size: var(--text-base, 14px);
-			font-weight: 400 !important;
-			font-variation-settings: "wght" 400;
-			line-height: 1.45;
-			white-space: pre-wrap;
-			overflow-wrap: anywhere;
-			word-break: break-word;
-			letter-spacing: normal;
-		}
-		.opsai-memory-row .opsai-memory-actions {
-			display: flex; flex-direction: column; gap: 4px;
-		}
-		.opsai-memory-add {
-			display: grid;
-			grid-template-columns: 1fr auto;
-			gap: 8px;
-			align-items: start;
-			margin-top: 10px;
-			padding: 8px;
-			border: 1px dashed var(--border-color, #d1d8dd);
-			border-radius: 6px;
-			background: var(--fg-color, #fff);
-		}
-		.opsai-memory-add textarea {
-			width: 100%;
-			min-height: 64px;
-			resize: vertical;
-			font-weight: 400 !important;
-		}
-		.opsai-memory-budget {
-			display: flex;
-			flex-wrap: wrap;
-			justify-content: space-between;
-			gap: 8px;
-			margin: 0 0 10px;
-			font-size: 12px;
-			color: var(--text-muted, #6c7680);
-		}
-		.opsai-memory-budget .opsai-char-stats {
-			margin-left: auto;
-			font-variant-numeric: tabular-nums;
-		}
-		.opsai-memory-budget.near .opsai-char-stats { color: var(--orange-600, #c47a0a); }
-		.opsai-memory-budget.full .opsai-char-stats,
-		.opsai-memory-budget.over .opsai-char-stats {
-			color: var(--red-600, #e24c4c);
-			font-weight: var(--weight-medium, 500);
-		}
-		@media (max-width: 960px) {
-			.opsai-hub-row-triple { grid-template-columns: 1fr; }
-			.opsai-connect-grid { grid-template-columns: 1fr; }
-		}
-		@media (max-width: 768px) {
-			.opsai-memory-row, .opsai-memory-add { grid-template-columns: 1fr; }
-			.opsai-hub-tiles { grid-template-columns: 1fr 1fr; }
-		}
-	`;
+	// Styles live in /assets/opsai/css/opsai_users_form.css (Espresso tokens).
+	// Keep this hook so refresh still has a single place to opt the form in.
+	const id = "opsai-users-form-css";
+	if (document.getElementById(id)) return;
+	const link = document.createElement("link");
+	link.id = id;
+	link.rel = "stylesheet";
+	link.href = "/assets/opsai/css/opsai_users_form.css?v=3";
+	document.head.appendChild(link);
 }
 
 function opsai_icon(name, size) {
@@ -966,14 +350,14 @@ function setup_hermes_hub(frm) {
 				tone: "cyan",
 				icon: "notebook",
 				label: "MEMORY.md",
-				meta: __("Agent notes · 2,200 chars"),
+				meta: __("Agent notes"),
 				attrs: { "data-kind": "memory" },
 			}) +
 			hermes_hub_tile({
 				tone: "green",
 				icon: "contact",
 				label: "USER.md",
-				meta: __("Your profile · 1,375 chars"),
+				meta: __("Your profile"),
 				attrs: { "data-kind": "user_md" },
 			}),
 	});
@@ -997,6 +381,13 @@ function setup_hermes_hub(frm) {
 				label: ".env",
 				meta: __("Environment secrets"),
 				attrs: { "data-kind": "env" },
+			}) +
+			hermes_hub_tile({
+				tone: "blue",
+				icon: "globe",
+				label: __("Frappe .env"),
+				meta: __("Site URL & API keys"),
+				attrs: { "data-kind": "frappe_env" },
 			}),
 	});
 
@@ -1092,6 +483,17 @@ function setup_hermes_hub(frm) {
 	load_hermes_models(frm, false);
 	refresh_hermes_gateway_tile(frm);
 }
+
+const FRAPPE_CONNECTION_ENV_FIELDS = [
+	{ key: "FM_SITE", description: __("FM Hostname") },
+	{ key: "FRAPPE_URL", description: __("Frappe Site URL for Hermes") },
+	{ key: "FRAPPE_URL_USER", description: __("Frappe Site URL for User") },
+	{ key: "FRAPPE_API_KEY", description: __("User API Access Key") },
+	{ key: "FRAPPE_API_SECRET", description: __("User API Key's Secret") },
+];
+const FRAPPE_CONNECTION_HIDDEN_ENV_KEYS = new Set(
+	FRAPPE_CONNECTION_ENV_FIELDS.map((f) => f.key)
+);
 
 function gateway_status_tone(state, running) {
 	const s = (state || "").toLowerCase();
@@ -1438,6 +840,10 @@ function open_hermes_file_editor(frm, kind) {
 		open_hermes_env_editor(frm);
 		return;
 	}
+	if (kind === "frappe_env") {
+		open_frappe_env_editor(frm);
+		return;
+	}
 	if (kind === "memory" || kind === "user_md") {
 		open_hermes_memory_editor(frm, kind);
 		return;
@@ -1524,7 +930,8 @@ function open_hermes_memory_editor(frm, kind) {
 	const state = {
 		profile: "",
 		path: "",
-		char_limit: kind === "user_md" ? 1375 : 2200,
+		// Filled from Hermes config.yaml (memory.*_char_limit) via get_hermes_file.
+		char_limit: null,
 		entries: [],
 		delimiter: HERMES_MEMORY_DELIMITER,
 	};
@@ -1969,6 +1376,180 @@ function open_hermes_manage(frm, which) {
 	if (which === "logs") return open_hermes_logs_viewer(frm);
 }
 
+function open_frappe_env_editor(frm) {
+	const state = { profile: "", values: {} };
+	const dialog = new frappe.ui.Dialog({
+		title: __("Frappe .env"),
+		size: "large",
+		fields: [
+			{
+				fieldname: "hint",
+				fieldtype: "HTML",
+				options: `<p class="text-muted" style="margin:0 0 8px">${__(
+					"These five keys write straight to Hermes .env. They are hidden from the generic .env editor. Values stay in the browser and are not stored in Frappe."
+				)}</p><p class="opsai-file-path text-muted" style="margin:0 0 8px;font-size:12px"></p>
+				<div class="opsai-frappe-env-editor"></div>`,
+			},
+		],
+		primary_action_label: __("Save all"),
+		primary_action() {
+			save_frappe_env_editor(frm, dialog, state);
+		},
+		secondary_action_label: __("Reload"),
+		secondary_action() {
+			load_frappe_env_editor(frm, dialog, state);
+		},
+	});
+	dialog._opsai_user = frm.doc.user || frm.doc.name;
+	dialog.show();
+	load_frappe_env_editor(frm, dialog, state);
+}
+
+function load_frappe_env_editor(frm, dialog, state) {
+	const $list = dialog.$wrapper.find(".opsai-frappe-env-editor").html(
+		`<p class="text-muted" style="margin:8px">${__("Loading from Hermes .env…")}</p>`
+	);
+	frappe
+		.call({
+			method: "opsai.api.get_frappe_connection_env",
+			args: { user: frm.doc.user || frm.doc.name },
+			freeze: true,
+			freeze_message: __("Loading Frappe .env…"),
+		})
+		.then((r) => {
+			const result = r.message || {};
+			if (!result.ok) {
+				$list.html(
+					`<p class="text-danger" style="margin:8px">${frappe.utils.escape_html(
+						result.message || __("Could not load")
+					)}</p>`
+				);
+				return;
+			}
+			state.profile = result.profile || "";
+			state.values = result.values || {};
+			const fields = result.fields?.length
+				? result.fields
+				: FRAPPE_CONNECTION_ENV_FIELDS.map((f) => ({
+						key: f.key,
+						description: f.description,
+				  }));
+			dialog.$wrapper
+				.find(".opsai-file-path")
+				.text(
+					[".env · Frappe bridge", state.profile ? `profile: ${state.profile}` : ""]
+						.filter(Boolean)
+						.join(" · ")
+				);
+			render_frappe_env_rows(frm, dialog, state, fields);
+			if (result.warnings?.length) {
+				frappe.show_alert({
+					message: result.warnings.join("; "),
+					indicator: "orange",
+				});
+			}
+		})
+		.catch((err) => {
+			$list.html(
+				`<p class="text-danger" style="margin:8px">${frappe.utils.escape_html(
+					err?.message || __("Could not load")
+				)}</p>`
+			);
+		});
+}
+
+function render_frappe_env_rows(frm, dialog, state, fields) {
+	const $list = dialog.$wrapper.find(".opsai-frappe-env-editor").empty();
+	const desc_by_key = Object.fromEntries(
+		FRAPPE_CONNECTION_ENV_FIELDS.map((f) => [f.key, f.description])
+	);
+	fields.forEach((field) => {
+		const key = field.key;
+		const desc = desc_by_key[key] || field.description || "";
+		const value = state.values[key] || "";
+		const $row = $(`<div class="opsai-env-row opsai-frappe-env-row" data-key="${frappe.utils.escape_html(
+			key
+		)}">
+			<div>
+				<div class="opsai-env-key">${frappe.utils.escape_html(key)}</div>
+				${desc ? `<div class="opsai-env-meta">${frappe.utils.escape_html(desc)}</div>` : ""}
+			</div>
+			<input type="text" class="form-control opsai-env-value" spellcheck="false" autocomplete="off"
+				value="${frappe.utils.escape_html(value)}" />
+			<div class="opsai-env-actions">
+				<button type="button" class="btn btn-primary btn-xs opsai-frappe-env-save-one">${__(
+					"Save"
+				)}</button>
+			</div>
+		</div>`);
+		$row.find(".opsai-frappe-env-save-one").on("click", () => {
+			const next = {};
+			next[key] = $row.find(".opsai-env-value").val() || "";
+			frappe
+				.call({
+					method: "opsai.api.save_frappe_connection_env",
+					args: {
+						values: next,
+						user: frm.doc.user || frm.doc.name,
+						profile: state.profile || undefined,
+					},
+					freeze: true,
+					freeze_message: __("Saving {0}…", [key]),
+				})
+				.then((r) => {
+					const result = r.message || {};
+					frappe.show_alert({
+						message: result.message || (result.ok ? __("Saved") : __("Save failed")),
+						indicator: result.ok ? "green" : "red",
+					});
+					if (result.ok) state.values[key] = next[key];
+				})
+				.catch((err) => {
+					frappe.show_alert({
+						message: err?.message || __("Save failed"),
+						indicator: "red",
+					});
+				});
+		});
+		$list.append($row);
+	});
+}
+
+function save_frappe_env_editor(frm, dialog, state) {
+	const values = {};
+	dialog.$wrapper.find(".opsai-frappe-env-row").each(function () {
+		const key = $(this).data("key");
+		values[key] = $(this).find(".opsai-env-value").val() || "";
+	});
+	frappe
+		.call({
+			method: "opsai.api.save_frappe_connection_env",
+			args: {
+				values,
+				user: frm.doc.user || frm.doc.name,
+				profile: state.profile || undefined,
+			},
+			freeze: true,
+			freeze_message: __("Saving Frappe .env…"),
+		})
+		.then((r) => {
+			const result = r.message || {};
+			frappe.show_alert({
+				message: result.message || (result.ok ? __("Saved") : __("Save failed")),
+				indicator: result.ok ? "green" : "red",
+			});
+			if (result.ok) {
+				state.values = { ...state.values, ...values };
+			}
+		})
+		.catch((err) => {
+			frappe.show_alert({
+				message: err?.message || __("Save failed"),
+				indicator: "red",
+			});
+		});
+}
+
 function open_hermes_env_editor(frm) {
 	const state = { profile: "", rows: [] };
 	const dialog = new frappe.ui.Dialog({
@@ -1979,7 +1560,7 @@ function open_hermes_env_editor(frm) {
 				fieldname: "hint",
 				fieldtype: "HTML",
 				options: `<p class="text-muted" style="margin:0 0 8px">${__(
-					"Each key has its own Reveal and Save. Values stay in the browser and are not stored in Frappe."
+					"Each key has its own Reveal and Save. Frappe bridge keys (FM_SITE / FRAPPE_*) are edited from the Frappe .env tile. Values stay in the browser and are not stored in Frappe."
 				)}</p><p class="opsai-file-path text-muted" style="margin:0 0 8px;font-size:12px"></p>
 				<div class="opsai-env-editor"></div>
 				<div class="opsai-env-add">
@@ -2004,6 +1585,16 @@ function open_hermes_env_editor(frm) {
 		const value = dialog.$wrapper.find(".opsai-env-new-value").val() || "";
 		if (!key) {
 			frappe.show_alert({ message: __("Enter a key name"), indicator: "orange" });
+			return;
+		}
+		if (FRAPPE_CONNECTION_HIDDEN_ENV_KEYS.has(key)) {
+			frappe.show_alert({
+				message: __(
+					"{0} is edited on the Frappe connection card, not in this .env dialog.",
+					[key]
+				),
+				indicator: "orange",
+			});
 			return;
 		}
 		save_hermes_env_row(frm, dialog, state, key, value, () => {
@@ -2058,14 +1649,17 @@ function load_hermes_env_rows(frm, dialog, state) {
 
 function render_hermes_env_rows(frm, dialog, state) {
 	const $list = dialog.$wrapper.find(".opsai-env-editor").empty();
-	if (!state.rows.length) {
+	const rows = (state.rows || []).filter(
+		(row) => !FRAPPE_CONNECTION_HIDDEN_ENV_KEYS.has(row.key)
+	);
+	if (!rows.length) {
 		$list.append(
 			`<p class="text-muted" style="margin:8px">${__("No set keys in Hermes .env yet.")}</p>`
 		);
 		return;
 	}
 
-	state.rows.forEach((row) => {
+	rows.forEach((row) => {
 		const key = row.key;
 		const meta = [row.category, row.description].filter(Boolean).join(" — ");
 		const $row = $(`<div class="opsai-env-row" data-key="${frappe.utils.escape_html(key)}">
@@ -2309,11 +1903,14 @@ function open_hermes_skills_manager(frm) {
 				fieldname: "body",
 				fieldtype: "HTML",
 				options: `<p class="text-muted" style="margin:0 0 8px">${__(
-					"Enable or disable installed Hermes skills. Nothing is stored in Frappe."
+					"Install skills from a URL or hub id, then enable or disable them. Nothing is stored in Frappe."
 				)}</p>
 				<div class="opsai-manage-toolbar">
 					<input type="search" class="form-control input-sm opsai-skills-filter" style="max-width:260px"
 						placeholder="${__("Filter skills…")}" />
+					<button type="button" class="btn btn-primary btn-sm opsai-skills-install">${__(
+						"Install from URL"
+					)}</button>
 					<span class="text-muted opsai-skills-count" style="font-size:12px"></span>
 				</div>
 				<div class="opsai-manage-list opsai-skills-list"></div>`,
@@ -2326,7 +1923,65 @@ function open_hermes_skills_manager(frm) {
 	});
 	dialog.show();
 	dialog.$wrapper.find(".opsai-skills-filter").on("input", () => render_hermes_skills(frm, dialog, state));
+	dialog.$wrapper.find(".opsai-skills-install").on("click", () => {
+		prompt_install_hermes_skill(frm, dialog, state);
+	});
 	load_hermes_skills(frm, dialog, state);
+}
+
+function prompt_install_hermes_skill(frm, dialog, state) {
+	frappe.prompt(
+		[
+			{
+				fieldname: "identifier",
+				label: __("Skill URL or hub id"),
+				fieldtype: "Data",
+				reqd: 1,
+				description: __(
+					"Examples: https://example.com/SKILL.md or official/research/arxiv"
+				),
+			},
+		],
+		(values) => {
+			const identifier = (values.identifier || "").trim();
+			if (!identifier) {
+				return;
+			}
+			frappe
+				.call({
+					method: "opsai.api.install_hermes_skill",
+					args: {
+						identifier,
+						user: frm.doc.user || frm.doc.name,
+						profile: state.profile || undefined,
+					},
+					freeze: true,
+					freeze_message: __("Installing skill on Hermes…"),
+				})
+				.then((r) => {
+					const result = r.message || {};
+					const msg = result.message || (result.ok ? __("Installed") : __("Failed"));
+					frappe.show_alert({
+						message: msg.split("\n")[0],
+						indicator: result.ok ? "green" : "red",
+					});
+					if (!result.ok && msg.includes("\n")) {
+						frappe.msgprint({
+							title: __("Install failed"),
+							message: `<pre style="white-space:pre-wrap;margin:0">${frappe.utils.escape_html(
+								msg
+							)}</pre>`,
+							indicator: "red",
+						});
+					}
+					if (result.ok) {
+						load_hermes_skills(frm, dialog, state);
+					}
+				});
+		},
+		__("Install Hermes skill"),
+		__("Install")
+	);
 }
 
 function load_hermes_skills(frm, dialog, state) {
@@ -2379,6 +2034,9 @@ function render_hermes_skills(frm, dialog, state) {
 				} opsai-skill-toggle">
 					${skill.enabled ? __("Disable") : __("Enable")}
 				</button>
+				<button type="button" class="btn btn-danger btn-xs opsai-skill-uninstall">${__(
+					"Uninstall"
+				)}</button>
 			</div>
 		</div>`);
 		$row.find(".opsai-skill-toggle").on("click", () => {
@@ -2401,6 +2059,40 @@ function render_hermes_skills(frm, dialog, state) {
 					});
 					if (result.ok) load_hermes_skills(frm, dialog, state);
 				});
+		});
+		$row.find(".opsai-skill-uninstall").on("click", () => {
+			frappe.confirm(__("Uninstall Hermes skill {0}?", [skill.name]), () => {
+				frappe
+					.call({
+						method: "opsai.api.uninstall_hermes_skill",
+						args: {
+							name: skill.name,
+							user: frm.doc.user || frm.doc.name,
+							profile: state.profile || undefined,
+						},
+						freeze: true,
+						freeze_message: __("Uninstalling skill on Hermes…"),
+					})
+					.then((r) => {
+						const result = r.message || {};
+						const msg =
+							result.message || (result.ok ? __("Uninstalled") : __("Failed"));
+						frappe.show_alert({
+							message: msg.split("\n")[0],
+							indicator: result.ok ? "green" : "red",
+						});
+						if (!result.ok && msg.includes("\n")) {
+							frappe.msgprint({
+								title: __("Uninstall failed"),
+								message: `<pre style="white-space:pre-wrap;margin:0">${frappe.utils.escape_html(
+									msg
+								)}</pre>`,
+								indicator: "red",
+							});
+						}
+						if (result.ok) load_hermes_skills(frm, dialog, state);
+					});
+			});
 		});
 		$list.append($row);
 	});

@@ -1,0 +1,57 @@
+/* Mirror Frappe's dock-owns-search-and-notifications for OpsAi.
+   Search / Notifications / Flow are hidden from the expanded sidebar when the
+   pinned dock owns the utility tray; .sidebar-opsai must join that list or
+   OpsAi appears twice (dock icon + first row under Manufacturing / etc.). */
+@media (min-width: 768px) {
+	body.dock-active.dock-pinned .body-sidebar .standard-items-band > .sidebar-opsai {
+		display: none;
+	}
+
+	body.dock-active.dock-pinned
+		.body-sidebar
+		.standard-items-band:not(
+			:has(> :not(.hidden, .navbar-modal-search-mobile, .sidebar-notification, .sidebar-flow, .sidebar-opsai))
+		) {
+		padding-top: 0;
+		margin-bottom: 0;
+	}
+}
+
+/* OpsAi Home number cards — Espresso / frappe-ui Stat Card pattern.
+   Desk already draws these with outline-gray / ink-gray tokens; we only add the
+   series dots (frappe.ui.stat_card `dot`) and keep the value in ink-gray so the
+   Home row matches the rest of Desk instead of custom neon hex colors. */
+.widget.number-widget-box[data-widget-name^="OpsAi "] .widget-head .widget-title {
+	gap: calc(var(--spacing, 0.25rem) * 1.5);
+}
+
+.widget.number-widget-box[data-widget-name^="OpsAi "] .widget-head .widget-title::before {
+	content: "";
+	flex-shrink: 0;
+	width: 8px;
+	height: 8px;
+	border-radius: var(--radius-full, 999px);
+	background: var(--ink-gray-5);
+}
+
+.widget.number-widget-box[data-widget-name="OpsAi System Users"] .widget-head .widget-title::before {
+	background: var(--ink-blue-7);
+}
+
+.widget.number-widget-box[data-widget-name="OpsAi Agents Assigned"] .widget-head .widget-title::before {
+	background: var(--ink-violet-7);
+}
+
+.widget.number-widget-box[data-widget-name="OpsAi Agents Live"] .widget-head .widget-title::before {
+	background: var(--ink-green-7);
+}
+
+.widget.number-widget-box[data-widget-name="OpsAi Agents Offline"] .widget-head .widget-title::before {
+	background: var(--ink-amber-7);
+}
+
+.widget.number-widget-box[data-widget-name^="OpsAi "] .widget-content .number {
+	color: var(--ink-gray-8);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.01em;
+}

@@ -1,0 +1,879 @@
+/* OpsAi Users form — Espresso / frappe-ui tokens only.
+   Scoped under .opsai-users-form (and legacy .opsai-settings-form). */
+
+.opsai-users-form .form-section,
+.opsai-settings-form .form-section {
+	margin-bottom: calc(var(--spacing) * 2);
+}
+
+.opsai-users-form .form-section .section-head,
+.opsai-settings-form .form-section .section-head {
+	font-size: var(--text-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--ink-gray-8);
+	letter-spacing: 0.01em;
+	padding-bottom: calc(var(--spacing) * 1.5);
+	border-bottom: 1px solid var(--outline-gray-1);
+	margin-bottom: calc(var(--spacing) * 3);
+}
+
+.opsai-url-row {
+	display: flex;
+	gap: calc(var(--spacing) * 2);
+	align-items: stretch;
+	width: 100%;
+}
+
+.opsai-url-row .opsai-url-input {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.opsai-url-row .opsai-url-test {
+	flex: 0 0 auto;
+	white-space: nowrap;
+	height: var(--input-height);
+}
+
+.opsai-connect-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: calc(var(--spacing) * 3);
+	margin: calc(var(--spacing) * 2) 0 calc(var(--spacing) * 4);
+	align-items: stretch;
+}
+
+/* Cards match Espresso Stat Card: outline, radius-lg, surface-base — no accent strip. */
+.opsai-auth-card,
+.opsai-create-card {
+	border: 1px solid var(--outline-gray-1);
+	border-radius: var(--radius-lg);
+	padding: calc(var(--spacing) * 3) calc(var(--spacing) * 4);
+	margin: 0;
+	background: var(--surface-base);
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.opsai-create-card {
+	margin: calc(var(--spacing) * 2) 0 calc(var(--spacing) * 4);
+}
+
+.opsai-auth-card {
+	height: 100%;
+}
+
+.opsai-auth-card .opsai-auth-card-body {
+	flex: 1;
+}
+
+.opsai-field-park {
+	display: none !important;
+}
+
+.opsai-create-card .frappe-control {
+	margin-bottom: calc(var(--spacing) * 2.5);
+}
+
+.opsai-auth-card .opsai-auth-card-head {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--spacing) * 2);
+	margin: 0 0 calc(var(--spacing) * 3);
+}
+
+.opsai-auth-card .opsai-auth-card-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: calc(var(--spacing) * 7);
+	height: calc(var(--spacing) * 7);
+	border-radius: var(--radius);
+	background: var(--surface-blue-1);
+	color: var(--ink-blue-7);
+	flex: 0 0 auto;
+}
+
+.opsai-auth-card.opsai-gateway-card .opsai-auth-card-icon {
+	background: var(--surface-amber-1);
+	color: var(--ink-amber-7);
+}
+
+.opsai-auth-card .opsai-auth-card-icon .icon {
+	--icon-stroke: currentColor;
+}
+
+.opsai-auth-card .opsai-auth-card-title {
+	font-size: var(--text-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--ink-gray-8);
+	margin: 0;
+}
+
+.opsai-auth-card .opsai-auth-card-sub {
+	font-size: var(--text-sm);
+	color: var(--ink-gray-5);
+	font-weight: var(--font-weight-regular, 400);
+	margin-top: 1px;
+}
+
+.opsai-auth-card .form-column,
+.opsai-auth-card .frappe-control {
+	margin-bottom: calc(var(--spacing) * 2);
+}
+
+.opsai-connect-row {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: calc(var(--spacing) * 3);
+	gap: calc(var(--spacing) * 2);
+}
+
+.opsai-url-hint {
+	font-size: var(--text-sm);
+	margin-top: calc(var(--spacing) * 1);
+}
+
+.opsai-url-hint.ok {
+	color: var(--ink-green-7);
+}
+
+.opsai-url-hint.bad {
+	color: var(--ink-red-7);
+}
+
+.opsai-model-dialog .opsai-model-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--spacing) * 2);
+	justify-content: flex-end;
+	margin: calc(var(--spacing) * 2) 0 0;
+}
+
+.opsai-users-form .frappe-control[data-fieldname="default_provider"],
+.opsai-users-form .frappe-control[data-fieldname="default_model"],
+.opsai-settings-form .frappe-control[data-fieldname="default_provider"],
+.opsai-settings-form .frappe-control[data-fieldname="default_model"] {
+	display: none !important;
+}
+
+.opsai-hub-tile .opsai-hub-tile-label.opsai-model-tile-label {
+	font-family: var(--font-mono, ui-monospace, monospace);
+	word-break: break-all;
+}
+
+/* Hermes hub shell */
+.opsai-hub {
+	margin: calc(var(--spacing) * 3) 0 calc(var(--spacing) * 5);
+	padding: 0;
+	border: 1px solid var(--outline-gray-1);
+	border-radius: var(--radius-lg);
+	background: var(--surface-base);
+	overflow: hidden;
+}
+
+.opsai-hub-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: calc(var(--spacing) * 3);
+	flex-wrap: wrap;
+	padding: calc(var(--spacing) * 4);
+	background: var(--surface-base);
+	border-bottom: 1px solid var(--outline-gray-1);
+}
+
+.opsai-hub-header-text {
+	min-width: 0;
+}
+
+.opsai-hub-kicker {
+	display: inline-flex;
+	align-items: center;
+	gap: calc(var(--spacing) * 1.5);
+	font-size: var(--text-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--ink-gray-5);
+	margin-bottom: calc(var(--spacing) * 1);
+}
+
+.opsai-hub-kicker .icon {
+	--icon-stroke: currentColor;
+}
+
+.opsai-hub-title {
+	font-size: var(--text-lg);
+	font-weight: var(--font-weight-semibold, 600);
+	color: var(--ink-gray-9);
+	margin: 0 0 calc(var(--spacing) * 1);
+	line-height: 1.3;
+}
+
+.opsai-hub-subtitle {
+	font-size: var(--text-sm);
+	color: var(--ink-gray-5);
+	margin: 0;
+	max-width: 46rem;
+	line-height: 1.45;
+}
+
+.opsai-hub-body {
+	padding: calc(var(--spacing) * 3);
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--spacing) * 3);
+}
+
+.opsai-hub-row {
+	display: grid;
+	gap: calc(var(--spacing) * 3);
+	align-items: stretch;
+}
+
+.opsai-hub-row-triple {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.opsai-hub-group {
+	border: 1px solid var(--outline-gray-1);
+	border-radius: var(--radius-lg);
+	background: var(--surface-gray-1);
+	padding: calc(var(--spacing) * 3);
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.opsai-hub-row .opsai-hub-group .opsai-hub-group-desc {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.opsai-hub-row .opsai-hub-tiles {
+	grid-template-columns: 1fr;
+	flex: 1;
+}
+
+.opsai-hub-row .opsai-hub-tile {
+	height: 100%;
+}
+
+.opsai-hub-group-head {
+	display: flex;
+	align-items: flex-start;
+	gap: calc(var(--spacing) * 2.5);
+	margin-bottom: calc(var(--spacing) * 2.5);
+}
+
+.opsai-hub-group-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: calc(var(--spacing) * 8);
+	height: calc(var(--spacing) * 8);
+	border-radius: var(--radius);
+	flex: 0 0 auto;
+	background: var(--surface-gray-2);
+	color: var(--ink-gray-7);
+}
+
+.opsai-hub-group-icon .icon {
+	--icon-stroke: currentColor;
+	width: 16px;
+	height: 16px;
+}
+
+.opsai-hub-group-icon.tone-blue {
+	background: var(--surface-blue-1);
+	color: var(--ink-blue-7);
+}
+
+.opsai-hub-group-icon.tone-cyan {
+	background: var(--surface-cyan-1);
+	color: var(--ink-cyan-7, var(--ink-blue-7));
+}
+
+.opsai-hub-group-icon.tone-orange {
+	background: var(--surface-amber-1);
+	color: var(--ink-amber-7);
+}
+
+.opsai-hub-group-icon.tone-purple {
+	background: var(--surface-violet-1);
+	color: var(--ink-violet-7);
+}
+
+.opsai-hub-group-icon.tone-red {
+	background: var(--surface-red-1);
+	color: var(--ink-red-7);
+}
+
+.opsai-hub-group-title {
+	font-size: var(--text-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--ink-gray-9);
+	margin: 0;
+}
+
+.opsai-hub-group-desc {
+	font-size: var(--text-sm);
+	color: var(--ink-gray-5);
+	margin: 2px 0 0;
+	line-height: 1.4;
+}
+
+.opsai-hub-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+	gap: calc(var(--spacing) * 2);
+}
+
+.opsai-hub-tile {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--spacing) * 1.5);
+	text-align: left;
+	width: 100%;
+	padding: calc(var(--spacing) * 3);
+	border: 1px solid var(--outline-gray-1);
+	border-radius: var(--radius);
+	background: var(--surface-base);
+	color: var(--ink-gray-8);
+	cursor: pointer;
+	transition: border-color 150ms ease;
+	box-shadow: none;
+}
+
+.opsai-hub-tile:hover {
+	border-color: var(--outline-gray-3);
+}
+
+.opsai-hub-tile:focus-visible {
+	outline: var(--focus-outline-default);
+	outline-offset: 2px;
+}
+
+.opsai-hub-tile-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: calc(var(--spacing) * 7);
+	height: calc(var(--spacing) * 7);
+	border-radius: var(--radius);
+	background: var(--surface-gray-2);
+	color: var(--ink-gray-7);
+}
+
+.opsai-hub-tile-icon .icon {
+	--icon-stroke: currentColor;
+}
+
+.opsai-hub-tile.tone-blue .opsai-hub-tile-icon {
+	background: var(--surface-blue-1);
+	color: var(--ink-blue-7);
+}
+
+.opsai-hub-tile.tone-cyan .opsai-hub-tile-icon {
+	background: var(--surface-cyan-1);
+	color: var(--ink-cyan-7, var(--ink-blue-7));
+}
+
+.opsai-hub-tile.tone-green .opsai-hub-tile-icon {
+	background: var(--surface-green-1);
+	color: var(--ink-green-7);
+}
+
+.opsai-hub-tile.tone-orange .opsai-hub-tile-icon {
+	background: var(--surface-amber-1);
+	color: var(--ink-amber-7);
+}
+
+.opsai-hub-tile.tone-yellow .opsai-hub-tile-icon {
+	background: var(--surface-yellow-1);
+	color: var(--ink-yellow-7, var(--ink-amber-7));
+}
+
+.opsai-hub-tile.tone-purple .opsai-hub-tile-icon {
+	background: var(--surface-violet-1);
+	color: var(--ink-violet-7);
+}
+
+.opsai-hub-tile.tone-gray .opsai-hub-tile-icon {
+	background: var(--surface-gray-2);
+	color: var(--ink-gray-7);
+}
+
+.opsai-hub-tile.tone-red .opsai-hub-tile-icon {
+	background: var(--surface-red-1);
+	color: var(--ink-red-7);
+}
+
+.opsai-hub-tile-label {
+	font-size: var(--text-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--ink-gray-9);
+	font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.opsai-hub-tile-meta {
+	font-size: var(--text-sm);
+	color: var(--ink-gray-5);
+	line-height: 1.35;
+}
+
+.opsai-hub-tile.opsai-hub-tile-danger {
+	border-color: var(--outline-red-1, var(--outline-gray-1));
+	background: var(--surface-red-1);
+}
+
+.opsai-hub-tile.opsai-hub-tile-danger:hover {
+	border-color: var(--outline-red-3, var(--outline-gray-3));
+}
+
+.opsai-hub-tile .opsai-hub-tile-status {
+	display: inline-flex;
+	align-items: center;
+	gap: calc(var(--spacing) * 1.5);
+	margin-top: 2px;
+}
+
+.opsai-gateway-dialog .opsai-gateway-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--spacing) * 2);
+	margin: calc(var(--spacing) * 3) 0 calc(var(--spacing) * 2.5);
+}
+
+.opsai-gateway-dialog .opsai-gateway-platforms {
+	margin: 0 0 calc(var(--spacing) * 2.5);
+	padding: 0;
+	list-style: none;
+	border: 1px solid var(--outline-gray-1);
+	border-radius: var(--radius);
+	overflow: hidden;
+	background: var(--surface-base);
+}
+
+.opsai-gateway-dialog .opsai-gateway-platforms li {
+	display: flex;
+	justify-content: space-between;
+	gap: calc(var(--spacing) * 2);
+	padding: calc(var(--spacing) * 2) calc(var(--spacing) * 2.5);
+	border-bottom: 1px solid var(--outline-gray-1);
+	font-size: var(--text-sm);
+}
+
+.opsai-gateway-dialog .opsai-gateway-platforms li:last-child {
+	border-bottom: 0;
+}
+
+.opsai-gateway-dialog .opsai-gateway-platforms .name {
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-weight: var(--font-weight-medium);
+}
+
+.opsai-gateway-dialog .opsai-gateway-meta {
+	font-size: var(--text-sm);
+	color: var(--ink-gray-5);
+	margin: 0 0 calc(var(--spacing) * 2);
+}
+
+/* Frappe .env dialog — same row chrome as generic .env, no Reveal. */
+.opsai-frappe-env-editor {
+	max-height: min(70vh, 640px);
+	overflow: auto;
+	border: 1px solid var(--outline-gray-1);
+	border-radius: var(--radius);
+	padding: calc(var(--spacing) * 2);
+	background: var(--surface-gray-1);
+}
+
+.opsai-frappe-env-editor .opsai-frappe-env-row {
+	grid-template-columns: minmax(160px, 240px) 1fr auto;
+}
+
+.opsai-hub-empty {
+	margin: calc(var(--spacing) * 3) 0 calc(var(--spacing) * 5);
+	padding: calc(var(--spacing) * 4);
+	border: 1px dashed var(--outline-gray-2);
+	border-radius: var(--radius-lg);
+	background: var(--surface-gray-1);
+	display: flex;
+	gap: calc(var(--spacing) * 3);
+	align-items: flex-start;
+}
+
+.opsai-hub-empty-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: calc(var(--spacing) * 9);
+	height: calc(var(--spacing) * 9);
+	border-radius: var(--radius);
+	flex: 0 0 auto;
+	background: var(--surface-amber-1);
+	color: var(--ink-amber-7);
+}
+
+.opsai-hub-empty-icon .icon {
+	--icon-stroke: currentColor;
+}
+
+.opsai-hub-empty-title {
+	font-size: var(--text-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--ink-gray-9);
+	margin: 0 0 2px;
+}
+
+.opsai-hub-empty-text {
+	font-size: var(--text-sm);
+	color: var(--ink-gray-5);
+	margin: 0;
+	line-height: 1.45;
+}
+
+.opsai-env-editor {
+	max-height: min(70vh, 640px);
+	overflow: auto;
+	border: 1px solid var(--outline-gray-1);
+	border-radius: var(--radius);
+	padding: calc(var(--spacing) * 2);
+	background: var(--surface-gray-1);
+}
+
+.opsai-env-row {
+	display: grid;
+	grid-template-columns: minmax(140px, 220px) 1fr auto;
+	gap: calc(var(--spacing) * 2);
+	align-items: start;
+	padding: calc(var(--spacing) * 2);
+	margin-bottom: calc(var(--spacing) * 1.5);
+	border-radius: var(--radius);
+	background: var(--surface-base);
+	border: 1px solid var(--outline-gray-1);
+}
+
+.opsai-env-row .opsai-env-key {
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: var(--text-sm);
+	font-weight: var(--font-weight-semibold, 600);
+	word-break: break-all;
+	padding-top: calc(var(--spacing) * 1.5);
+	color: var(--ink-gray-8);
+}
+
+.opsai-env-row .opsai-env-meta {
+	font-size: var(--text-sm);
+	color: var(--ink-gray-5);
+	font-weight: var(--font-weight-regular, 400);
+	margin-top: 2px;
+}
+
+.opsai-env-row .opsai-env-value {
+	width: 100%;
+	min-height: 30px;
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: var(--text-sm);
+}
+
+.opsai-env-row .opsai-env-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--spacing) * 1);
+	justify-content: flex-end;
+}
+
+.opsai-env-add {
+	display: grid;
+	grid-template-columns: minmax(140px, 220px) 1fr auto;
+	gap: calc(var(--spacing) * 2);
+	align-items: center;
+	margin-top: calc(var(--spacing) * 2.5);
+	padding: calc(var(--spacing) * 2);
+	border: 1px dashed var(--outline-gray-2);
+	border-radius: var(--radius);
+	background: var(--surface-base);
+}
+
+.opsai-env-add input {
+	width: 100%;
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: var(--text-sm);
+}
+
+.opsai-soul-editor .opsai-soul-label {
+	display: block;
+	margin-bottom: calc(var(--spacing) * 1.5);
+	font-size: var(--text-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--ink-gray-6);
+}
+
+.opsai-soul-editor .opsai-soul-label .reqd {
+	color: var(--ink-red-7);
+}
+
+.opsai-soul-editor textarea.opsai-soul-textarea.form-control {
+	display: block;
+	width: 100%;
+	min-height: min(60vh, 480px);
+	height: min(60vh, 480px);
+	resize: vertical;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+	line-height: 1.5;
+	letter-spacing: normal;
+	font-family: var(--font-stack);
+	font-size: var(--text-base);
+	font-weight: 400 !important;
+	font-variation-settings: "wght" 400;
+	color: var(--ink-gray-9);
+	background-color: var(--control-bg, var(--surface-base));
+	border: 1px solid var(--outline-gray-2);
+	border-radius: var(--radius);
+	padding: calc(var(--spacing) * 2) calc(var(--spacing) * 2.5);
+	box-shadow: none;
+	-webkit-font-smoothing: antialiased;
+}
+
+.opsai-soul-editor textarea.opsai-soul-textarea.form-control:focus {
+	border-color: var(--outline-gray-3);
+	outline: var(--focus-outline-default);
+	outline-offset: 0;
+	box-shadow: none;
+}
+
+.opsai-soul-editor .opsai-char-count {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: calc(var(--spacing) * 2);
+	margin-top: calc(var(--spacing) * 1.5);
+	font-size: var(--text-sm);
+	color: var(--ink-gray-5);
+}
+
+.opsai-soul-editor .opsai-char-count .opsai-char-stats {
+	margin-left: auto;
+	font-variant-numeric: tabular-nums;
+}
+
+.opsai-soul-editor .opsai-char-count.near .opsai-char-stats {
+	color: var(--ink-amber-7);
+}
+
+.opsai-soul-editor .opsai-char-count.full .opsai-char-stats,
+.opsai-soul-editor .opsai-char-count.over .opsai-char-stats {
+	color: var(--ink-red-7);
+	font-weight: var(--font-weight-medium);
+}
+
+.opsai-manage-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--spacing) * 2);
+	align-items: center;
+	margin-bottom: calc(var(--spacing) * 2.5);
+}
+
+.opsai-manage-list {
+	max-height: min(65vh, 560px);
+	overflow: auto;
+	border: 1px solid var(--outline-gray-1);
+	border-radius: var(--radius);
+	background: var(--surface-gray-1);
+}
+
+.opsai-manage-row {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: calc(var(--spacing) * 2);
+	align-items: start;
+	padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3);
+	border-bottom: 1px solid var(--outline-gray-1);
+	background: var(--surface-base);
+}
+
+.opsai-manage-row:last-child {
+	border-bottom: 0;
+}
+
+.opsai-manage-row .opsai-manage-title {
+	font-weight: var(--font-weight-medium);
+	font-size: var(--text-sm);
+	color: var(--ink-gray-9);
+}
+
+.opsai-manage-row .opsai-manage-meta {
+	font-size: var(--text-sm);
+	color: var(--ink-gray-5);
+	margin-top: 2px;
+}
+
+.opsai-manage-row .opsai-manage-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--spacing) * 1);
+	justify-content: flex-end;
+}
+
+.opsai-logs-view {
+	max-height: min(65vh, 560px);
+	overflow: auto;
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: var(--text-sm);
+	font-weight: 400;
+	line-height: 1.45;
+	white-space: pre-wrap;
+	word-break: break-word;
+	background: var(--surface-base);
+	border: 1px solid var(--outline-gray-1);
+	border-radius: var(--radius);
+	padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3);
+	color: var(--ink-gray-8);
+}
+
+.opsai-restart-status {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--spacing) * 2);
+	margin: 0 0 calc(var(--spacing) * 2.5);
+	flex-wrap: wrap;
+}
+
+.opsai-restart-status .opsai-restart-detail {
+	color: var(--ink-gray-5);
+	font-size: var(--text-sm);
+}
+
+.opsai-restart-log {
+	max-height: min(55vh, 480px);
+	min-height: 160px;
+}
+
+.opsai-memory-editor {
+	max-height: min(65vh, 560px);
+	overflow: auto;
+	border: 1px solid var(--outline-gray-1);
+	border-radius: var(--radius);
+	padding: calc(var(--spacing) * 2);
+	background: var(--surface-gray-1);
+}
+
+.opsai-memory-row {
+	display: grid;
+	grid-template-columns: 56px 1fr auto;
+	gap: calc(var(--spacing) * 2);
+	align-items: start;
+	padding: calc(var(--spacing) * 2);
+	margin-bottom: calc(var(--spacing) * 1.5);
+	border-radius: var(--radius);
+	background: var(--surface-base);
+	border: 1px solid var(--outline-gray-1);
+}
+
+.opsai-memory-row .opsai-memory-index {
+	font-size: var(--text-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--ink-gray-5);
+	padding-top: calc(var(--spacing) * 2);
+}
+
+.opsai-memory-row textarea.opsai-memory-value {
+	width: 100%;
+	min-height: 72px;
+	resize: vertical;
+	font-family: var(--font-stack);
+	font-size: var(--text-base);
+	font-weight: 400 !important;
+	font-variation-settings: "wght" 400;
+	line-height: 1.45;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+	letter-spacing: normal;
+	color: var(--ink-gray-9);
+	background: var(--control-bg, var(--surface-base));
+	border: 1px solid var(--outline-gray-2);
+	border-radius: var(--radius);
+}
+
+.opsai-memory-row .opsai-memory-actions {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--spacing) * 1);
+}
+
+.opsai-memory-add {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: calc(var(--spacing) * 2);
+	align-items: start;
+	margin-top: calc(var(--spacing) * 2.5);
+	padding: calc(var(--spacing) * 2);
+	border: 1px dashed var(--outline-gray-2);
+	border-radius: var(--radius);
+	background: var(--surface-base);
+}
+
+.opsai-memory-add textarea {
+	width: 100%;
+	min-height: 64px;
+	resize: vertical;
+	font-weight: 400 !important;
+}
+
+.opsai-memory-budget {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: calc(var(--spacing) * 2);
+	margin: 0 0 calc(var(--spacing) * 2.5);
+	font-size: var(--text-sm);
+	color: var(--ink-gray-5);
+}
+
+.opsai-memory-budget .opsai-char-stats {
+	margin-left: auto;
+	font-variant-numeric: tabular-nums;
+}
+
+.opsai-memory-budget.near .opsai-char-stats {
+	color: var(--ink-amber-7);
+}
+
+.opsai-memory-budget.full .opsai-char-stats,
+.opsai-memory-budget.over .opsai-char-stats {
+	color: var(--ink-red-7);
+	font-weight: var(--font-weight-medium);
+}
+
+@media (max-width: 960px) {
+	.opsai-hub-row-triple {
+		grid-template-columns: 1fr;
+	}
+
+	.opsai-connect-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 768px) {
+	.opsai-env-row,
+	.opsai-env-add,
+	.opsai-memory-row,
+	.opsai-memory-add {
+		grid-template-columns: 1fr;
+	}
+
+	.opsai-hub-tiles {
+		grid-template-columns: 1fr 1fr;
+	}
+}

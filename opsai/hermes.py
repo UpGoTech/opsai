@@ -47,18 +47,18 @@ def _opener(cookiejar: CookieJar | None = None) -> OpenerDirector:
 
 
 def get_user_settings(user: str | None = None) -> dict[str, Any]:
-	"""Load the signed-in user's OpsAi Settings (Password fields decrypted)."""
+	"""Load the signed-in user's OpsAi Users (Password fields decrypted)."""
 	user = user or frappe.session.user
 	if not user or user == "Guest":
 		frappe.throw(_("Not logged in"), frappe.AuthenticationError)
 
-	if not frappe.db.exists("OpsAi Settings", user):
+	if not frappe.db.exists("OpsAi Users", user):
 		frappe.throw(
-			_("Set your OpsAi Settings (Gateway URL) before using Hermes."),
+			_("Set your OpsAi Users (Gateway URL) before using Hermes."),
 			frappe.ValidationError,
 		)
 
-	doc = frappe.get_doc("OpsAi Settings", user)
+	doc = frappe.get_doc("OpsAi Users", user)
 	if doc.user != user and "System Manager" not in frappe.get_roles(user):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
@@ -88,7 +88,7 @@ def get_user_settings(user: str | None = None) -> dict[str, Any]:
 
 
 def is_explicitly_disconnected(settings: dict[str, Any] | None) -> bool:
-	"""True only when OpsAi Settings was marked Disconnected (sticky until Connect)."""
+	"""True only when OpsAi Users was marked Disconnected (sticky until Connect)."""
 	if not settings:
 		return False
 	status = (settings.get("connection_status") or "").strip().lower()
@@ -118,10 +118,10 @@ def is_hermes_connected(settings: dict[str, Any] | None) -> bool:
 
 
 def _save_session_cookies(user: str, cookies: dict[str, str]):
-	"""Persist Hermes dashboard session cookies on OpsAi Settings."""
-	if not user or not frappe.db.exists("OpsAi Settings", user):
+	"""Persist Hermes dashboard session cookies on OpsAi Users."""
+	if not user or not frappe.db.exists("OpsAi Users", user):
 		return
-	doc = frappe.get_doc("OpsAi Settings", user)
+	doc = frappe.get_doc("OpsAi Users", user)
 	doc.session_cookies = json.dumps(cookies)
 	doc.connection_status = _("Connected")
 	# Empty Password fields on a loaded doc would otherwise be wiped by _save_passwords.
@@ -284,10 +284,10 @@ def password_login(settings: dict[str, Any], *, persist: bool = True) -> dict[st
 def ensure_session(settings: dict[str, Any]) -> dict[str, Any]:
 	"""Ensure password-mode settings carry a live cookie jar (login if needed).
 
-	Never auto-login after an explicit Disconnect — Connect in OpsAi Settings must run first.
+	Never auto-login after an explicit Disconnect — Connect in OpsAi Users must run first.
 	"""
 	if is_explicitly_disconnected(settings):
-		raise HermesError(_("Hermes is disconnected. Open OpsAi Settings and click Connect."))
+		raise HermesError(_("Hermes is disconnected. Open OpsAi Users and click Connect."))
 	auth_mode = (settings.get("auth_mode") or "password").strip()
 	if auth_mode in ("token", "session_token") and settings.get("session_token"):
 		return settings
@@ -344,14 +344,14 @@ def _parse_json_response(code: int, headers, raw: str) -> Any:
 	except Exception:
 		pass
 	if is_login_redirect(code, headers, raw):
-		raise HermesError(_("Hermes session expired — open OpsAi Settings and click Connect."))
+		raise HermesError(_("Hermes session expired — open OpsAi Users and click Connect."))
 	if code >= 400:
 		raise HermesError(_("Hermes error ({0}): {1}").format(code, _error_detail(raw)[:800]))
 	if not raw:
 		return None
 	if "application/json" not in ctype and raw.lstrip()[:1] not in ("{", "["):
 		raise HermesError(
-			_("Hermes returned a non-JSON response (HTTP {0}). Reconnect from OpsAi Settings.").format(code)
+			_("Hermes returned a non-JSON response (HTTP {0}). Reconnect from OpsAi Users.").format(code)
 		)
 	try:
 		return json.loads(raw)
@@ -378,7 +378,7 @@ def request(
 	headers = _auth_headers(settings)
 	if "Authorization" not in headers and "Cookie" not in headers:
 		frappe.throw(
-			_("Not connected to Hermes. Open OpsAi Settings, enter username/password, and click Connect."),
+			_("Not connected to Hermes. Open OpsAi Users, enter username/password, and click Connect."),
 			frappe.ValidationError,
 		)
 	headers["X-Hermes-Session-Key"] = session_key()
@@ -445,7 +445,7 @@ def try_request(
 
 	headers = _auth_headers(settings)
 	if "Authorization" not in headers and "Cookie" not in headers:
-		return False, None, _("Not connected — click Connect in OpsAi Settings")
+		return False, None, _("Not connected — click Connect in OpsAi Users")
 	headers["X-Hermes-Session-Key"] = session_key()
 
 	data = None if body is None else json.dumps(body).encode()
@@ -512,7 +512,7 @@ def request_bytes(
 
 	headers = _auth_headers(settings)
 	if "Authorization" not in headers and "Cookie" not in headers:
-		raise HermesError(_("Not connected to Hermes. Open OpsAi Settings and click Connect."))
+		raise HermesError(_("Not connected to Hermes. Open OpsAi Users and click Connect."))
 	headers["X-Hermes-Session-Key"] = session_key()
 
 	req = Request(url, data=None, headers=headers, method=method.upper())
@@ -533,7 +533,7 @@ def request_bytes(
 						settings=settings,
 						_retried=True,
 					)
-				raise HermesError(_("Hermes session expired — reconnect from OpsAi Settings."))
+				raise HermesError(_("Hermes session expired — reconnect from OpsAi Users."))
 			if code >= 400:
 				raise HermesError(_("Hermes error ({0}): {1}").format(code, _error_detail(sample)[:800]))
 			return raw or b""

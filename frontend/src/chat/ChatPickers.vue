@@ -78,7 +78,7 @@ const agentTitle = computed(
 const statusTitle = computed(
 	() =>
 		statusMessage.value ||
-		(connected.value ? __("Hermes brain is online") : __("Hermes brain is offline — Connect in OpsAi Settings"))
+		(connected.value ? __("Hermes brain is online") : __("Hermes brain is offline — Connect in OpsAi Users"))
 );
 const hasSkills = computed(() => (flow.state.skills ?? []).length > 0 || page.can("Flow Skill", "create"));
 

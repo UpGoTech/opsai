@@ -19,6 +19,15 @@ export {
 	stepStat,
 	stepSubject,
 } from "./transcript.js"
+export {
+	anchorFromClick,
+	coerceRouteOptionValue,
+	deskPathFromHref,
+	deskRouteOptionsFromSearch,
+	navigateDeskHref,
+	normalizeDeskHref,
+	shouldInterceptDeskClick,
+} from "./deskRoute.js"
 export { highlightCode, renderMarkdown, renderMarkdownSegments } from "./markdown.js"
 
 export { default as OpsAiChat } from "./components/OpsAiChat.vue"

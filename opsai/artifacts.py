@@ -22,7 +22,9 @@ from opsai.hermes import HermesError, ensure_session, get_user_settings, request
 # Absolute workspace roots Hermes commonly writes into.
 _SERVER_ROOT = r"/(?:opt|home|tmp|var|Users|root|data)"
 _ARTIFACT_EXT = r"html?|xhtml|pdf"
-_PATH_CORE = rf"{_SERVER_ROOT}/[^\s)\]>\"'`]+?\.(?:{_ARTIFACT_EXT})"
+# Allow spaces inside the path (e.g. /opt/data/Open Projects.pdf) but not newlines
+# or closing delimiters. Non-greedy up to the artifact extension.
+_PATH_CORE = rf"{_SERVER_ROOT}/[^\n)\]>\"'`]+?\.(?:{_ARTIFACT_EXT})\b"
 
 # Leading whitespace is consumed so we don't need a variable-width lookbehind.
 _PREVIEW_RE = re.compile(
@@ -77,7 +79,9 @@ def _gateway_path(raw: str) -> str | None:
 		rest = re.sub(r"^MEDIA:", "", text, flags=re.I).strip()
 		return rest if rest.startswith("/") else f"/{rest}"
 	if re.match(rf"^{_SERVER_ROOT}/", text):
-		return text.split()[0].rstrip(".,;:)")
+		# Keep spaces in filenames (e.g. Open Projects.pdf); only cut at newline.
+		line = text.split("\n", 1)[0].strip().rstrip(".,;:)")
+		return line or None
 	return None
 
 

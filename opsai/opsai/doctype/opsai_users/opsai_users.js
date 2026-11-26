@@ -2,7 +2,16 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("OpsAi Users", {
+	validate(frm) {
+		// Create-form Test chrome wraps the input; typed URL can sit in the DOM
+		// while frm.doc.gateway_url is still blank — sync before mandatory checks.
+		sync_opsai_url_from_input(frm);
+		sync_opsai_user_from_input(frm);
+	},
+
 	before_save(frm) {
+		sync_opsai_url_from_input(frm);
+		sync_opsai_user_from_input(frm);
 		// Blank Password inputs must not wipe secrets already stored in __Auth.
 		["gateway_password", "session_token", "session_cookies"].forEach((name) => {
 			const typed = field_input_value(frm, name);
@@ -2825,6 +2834,10 @@ function setup_url_test(frm) {
 	$btn.prop("disabled", busy);
 	$input.closest(".opsai-url-row").append($btn);
 	$btn.off("click.opsai").on("click.opsai", () => probe_url(frm));
+	// Keep frm.doc in sync when the Test row wraps the live input (Save reads the model).
+	$input
+		.off("change.opsai_url blur.opsai_url")
+		.on("change.opsai_url blur.opsai_url", () => sync_opsai_url_from_input(frm));
 }
 
 function set_url_test_button(frm, { busy, label } = {}) {
@@ -2858,7 +2871,7 @@ function finish_url_probe(frm) {
 }
 
 function probe_url(frm) {
-	const url = (frm.doc.gateway_url || frm.get_field("gateway_url")?.get_value?.() || "").trim();
+	const url = sync_opsai_url_from_input(frm);
 	if (!url) {
 		frappe.msgprint(__("Enter a Gateway URL first"));
 		return;
@@ -3051,6 +3064,43 @@ function field_input_value(frm, fieldname) {
 		return "";
 	}
 	return value;
+}
+
+function sync_opsai_url_from_input(frm) {
+	const field = frm.get_field("gateway_url");
+	const typed = (
+		field?.get_input_value?.() ||
+		field?.$input?.val?.() ||
+		field?.$wrapper?.find("input:not([type=hidden])").first().val?.() ||
+		frm.doc.gateway_url ||
+		""
+	)
+		.toString()
+		.trim();
+	if (typed) {
+		frm.doc.gateway_url = typed;
+		const local = locals[frm.doctype] && locals[frm.doctype][frm.doc.name];
+		if (local) local.gateway_url = typed;
+	}
+	return typed;
+}
+
+function sync_opsai_user_from_input(frm) {
+	const field = frm.get_field("user");
+	const typed = (
+		field?.get_input_value?.() ||
+		field?.$input?.val?.() ||
+		frm.doc.user ||
+		""
+	)
+		.toString()
+		.trim();
+	if (typed) {
+		frm.doc.user = typed;
+		const local = locals[frm.doctype] && locals[frm.doctype][frm.doc.name];
+		if (local) local.user = typed;
+	}
+	return typed;
 }
 
 function connect_password(frm) {
